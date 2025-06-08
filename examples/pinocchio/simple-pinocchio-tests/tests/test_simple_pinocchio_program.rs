@@ -9,59 +9,68 @@
 //! when assertions fail. Choose the style that fits your testing preferences.
 
 use {
-    litesvm::LiteSVM,
-    simple_pinocchio_tests::load_simple_pinocchio_program,
-    solana_instruction::Instruction,
-    solana_keypair::Keypair,
-    solana_signer::Signer,
-    solana_transaction::Transaction,
+    litesvm::LiteSVM, pinocchio::program_error::ProgramError,
+    simple_pinocchio_tests::load_simple_pinocchio_program, solana_instruction::Instruction,
+    solana_keypair::Keypair, solana_signer::Signer, solana_transaction::Transaction,
 };
 
-fn funded_keypair(svm: &mut LiteSVM, sol_amount: u64) -> Keypair {
-    const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
+const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 
-    let payer = Keypair::new();
-
-    svm.airdrop(&payer.pubkey(), sol_amount * LAMPORTS_PER_SOL)
-        .expect("airdrop failed");
-
-    payer
-}
-
-fn build_simple_ix() -> Instruction {
-    Instruction {
-        program_id: simple_pinocchio_program::ID.into(),
-        accounts: vec![],
-        data: vec![],
-    }
-}
-
-fn simple_setup() -> (LiteSVM, Transaction) {
+fn setup() -> (LiteSVM, Keypair) {
     let mut svm = LiteSVM::new();
     load_simple_pinocchio_program(&mut svm);
-    let payer = funded_keypair(&mut svm, 10);
 
-    let ix = build_simple_ix();
+    let fee_payer = Keypair::new();
+    svm.airdrop(&fee_payer.pubkey(), 1_000 * LAMPORTS_PER_SOL)
+        .expect("airdrop failed");
 
-    let tx = Transaction::new_signed_with_payer(
+    (svm, fee_payer)
+}
+
+fn build_say_hello_tx(svm: &LiteSVM, fee_payer: &Keypair) -> Transaction {
+    let ix = Instruction {
+        program_id: simple_pinocchio_program::ID.into(),
+        accounts: vec![],
+        data: vec![simple_pinocchio_program::Instruction::LogHello as u8], // Use enum constant
+    };
+
+    Transaction::new_signed_with_payer(
         &[ix],
-        Some(&payer.pubkey()),
-        &[&payer],
+        Some(&fee_payer.pubkey()),
+        &[fee_payer],
         svm.latest_blockhash(),
-    );
+    )
+}
 
-    (svm, tx)
+fn build_program_error_tx(svm: &LiteSVM, fee_payer: &Keypair, err: ProgramError) -> Transaction {
+    let error_code: u64 = err.into(); // Use .into() to convert ProgramError to u64
+
+    let mut data = vec![simple_pinocchio_program::Instruction::FailWithProgramError as u8]; // Use enum constant
+    data.extend_from_slice(&error_code.to_le_bytes()); // Add u64 as 8 bytes
+
+    let ix = Instruction {
+        program_id: simple_pinocchio_program::ID.into(),
+        accounts: vec![],
+        data,
+    };
+
+    Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&fee_payer.pubkey()),
+        &[fee_payer],
+        svm.latest_blockhash(),
+    )
 }
 
 /// Test using the direct function call approach
 #[test]
 fn test_use_demand_logs_contain_directly() {
     use litesvm_testing::demand_logs_contain;
+    let (mut svm, fee_payer) = setup();
 
-    let (mut svm, tx) = simple_setup();
+    let tx = build_say_hello_tx(&svm, &fee_payer);
 
     let result = svm.send_transaction(tx);
-
     demand_logs_contain(result, "Hello from pinocchio!");
 }
 
@@ -69,9 +78,27 @@ fn test_use_demand_logs_contain_directly() {
 #[test]
 fn test_use_demand_logs_contain_fluently() {
     use litesvm_testing::DemandFluency;
+    let (mut svm, fee_payer) = setup();
 
-    let (mut svm, tx) = simple_setup();
+    let tx = build_say_hello_tx(&svm, &fee_payer);
 
     svm.send_transaction(tx)
         .demand_logs_contain("Hello from pinocchio!");
+}
+
+/// Test that error transactions work (temporary verification test)
+#[test]
+fn test_error_tx_works() {
+    let (mut svm, fee_payer) = setup();
+
+    let tx = build_program_error_tx(&svm, &fee_payer, ProgramError::InvalidAccountData);
+
+    let result = svm.send_transaction(tx);
+    assert!(result.is_err(), "Transaction should have failed");
+
+    // Verify we get some error logs
+    if let Err(meta) = result {
+        println!("Error logs: {:?}", meta.meta.logs);
+        assert!(!meta.meta.logs.is_empty(), "Should have some logs");
+    }
 }

@@ -9,7 +9,7 @@
 //! when assertions fail. Choose the style that fits your testing preferences.
 
 use {
-    anchor_lang::{InstructionData, ToAccountMetas},
+    anchor_lang::{prelude::ProgramError, InstructionData, ToAccountMetas},
     litesvm::LiteSVM,
     simple_anchor_tests::load_simple_anchor_program,
     solana_instruction::Instruction,
@@ -18,53 +18,64 @@ use {
     solana_transaction::Transaction,
 };
 
-fn funded_keypair(svm: &mut LiteSVM, sol_amount: u64) -> Keypair {
-    const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
+const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 
-    let payer = Keypair::new();
+fn setup() -> (LiteSVM, Keypair) {
+    let mut svm = LiteSVM::new();
+    load_simple_anchor_program(&mut svm);
 
-    svm.airdrop(&payer.pubkey(), sol_amount * LAMPORTS_PER_SOL)
+    let fee_payer = Keypair::new();
+    svm.airdrop(&fee_payer.pubkey(), 1_000 * LAMPORTS_PER_SOL)
         .expect("airdrop failed");
 
-    payer
+    (svm, fee_payer)
 }
 
-fn build_simple_ix() -> Instruction {
-    let ix_accounts = simple_anchor_program::accounts::Initialize {};
-    let ix_data = simple_anchor_program::instruction::Initialize {};
-    Instruction {
+fn build_say_hello_tx(svm: &LiteSVM, fee_payer: &Keypair) -> Transaction {
+    let ix_accounts = simple_anchor_program::accounts::LogHello {};
+    let ix_data = simple_anchor_program::instruction::LogHello {};
+    let ix = Instruction {
         program_id: simple_anchor_program::ID,
         accounts: ix_accounts.to_account_metas(None),
         data: ix_data.data(),
-    }
+    };
+
+    Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&fee_payer.pubkey()),
+        &[fee_payer],
+        svm.latest_blockhash(),
+    )
 }
 
-fn simple_setup() -> (LiteSVM, Transaction) {
-    let mut svm = LiteSVM::new();
-    load_simple_anchor_program(&mut svm);
-    let payer = funded_keypair(&mut svm, 10);
+fn build_program_error_tx(svm: &LiteSVM, fee_payer: &Keypair, err: ProgramError) -> Transaction {
+    let ix_accounts = simple_anchor_program::accounts::FailInstruction {};
+    let ix_data = simple_anchor_program::instruction::FailWithProgramError {
+        error_code: err.into(),
+    };
+    let ix = Instruction {
+        program_id: simple_anchor_program::ID,
+        accounts: ix_accounts.to_account_metas(None),
+        data: ix_data.data(),
+    };
 
-    let ix = build_simple_ix();
-
-    let tx = Transaction::new_signed_with_payer(
+    Transaction::new_signed_with_payer(
         &[ix],
-        Some(&payer.pubkey()),
-        &[&payer],
+        Some(&fee_payer.pubkey()),
+        &[fee_payer],
         svm.latest_blockhash(),
-    );
-
-    (svm, tx)
+    )
 }
 
 /// Test using the direct function call approach
 #[test]
 fn test_use_demand_logs_contain_directly() {
     use litesvm_testing::demand_logs_contain;
+    let (mut svm, fee_payer) = setup();
 
-    let (mut svm, tx) = simple_setup();
+    let tx = build_say_hello_tx(&svm, &fee_payer);
 
     let result = svm.send_transaction(tx);
-
     demand_logs_contain(result, "Hello from anchor!");
 }
 
@@ -72,9 +83,27 @@ fn test_use_demand_logs_contain_directly() {
 #[test]
 fn test_use_demand_logs_contain_fluently() {
     use litesvm_testing::DemandFluency;
+    let (mut svm, fee_payer) = setup();
 
-    let (mut svm, tx) = simple_setup();
+    let tx = build_say_hello_tx(&svm, &fee_payer);
 
     svm.send_transaction(tx)
         .demand_logs_contain("Hello from anchor!");
+}
+
+/// Test that error transactions work (temporary verification test)
+#[test]
+fn test_error_tx_works() {
+    let (mut svm, fee_payer) = setup();
+
+    let tx = build_program_error_tx(&svm, &fee_payer, ProgramError::InvalidAccountData);
+
+    let result = svm.send_transaction(tx);
+    assert!(result.is_err(), "Transaction should have failed");
+
+    // Verify we get some error logs
+    if let Err(meta) = result {
+        println!("Error logs: {:?}", meta.meta.logs);
+        assert!(!meta.meta.logs.is_empty(), "Should have some logs");
+    }
 }

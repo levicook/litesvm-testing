@@ -3,17 +3,14 @@
 //! This crate provides testing utilities for Solana programs using LiteSVM.
 //! Currently focused on log assertions with support for multiple testing patterns.
 //!
-//! ## Quick Start
+//! ## API Patterns
 //!
-//! ```rust,no_run
-//! // Direct function call
-//! use litesvm_testing::demand_logs_contain;
-//! demand_logs_contain(result, "Hello from anchor!");
+//! Two ways to assert on transaction logs:
+//! 1. **Direct function call**: `demand_logs_contain(result, "message")`
+//! 2. **Fluent trait method**: `result.demand_logs_contain("message")`
 //!
-//! // Fluent trait method  
-//! use litesvm_testing::DemandFluency;
-//! result.demand_logs_contain("Hello from anchor!");
-//! ```
+//! Both approaches provide the same functionality with detailed error messages
+//! when assertions fail.
 //!
 //! ## Complete Examples
 //!
@@ -45,17 +42,7 @@ use litesvm::types::TransactionResult;
 /// detailed error messages when conditions are not met. The fluent API allows
 /// for readable test code that chains naturally from transaction execution.
 ///
-/// # Example
-///
-/// ```rust,no_run
-/// use litesvm_testing::DemandFluency;
-/// # use litesvm::LiteSVM; use solana_keypair::Keypair; use solana_transaction::Transaction;
-/// # let mut svm = LiteSVM::new(); let payer = Keypair::new();
-/// # let tx = Transaction::new_signed_with_payer(&[], Some(&payer.pubkey()), &[&payer], svm.latest_blockhash());
-///
-/// svm.send_transaction(tx)
-///    .demand_logs_contain("Hello from anchor!");
-/// ```
+/// See the working examples in the repository for complete usage patterns.
 pub trait DemandFluency<T> {
     /// Assert that transaction logs contain a specific string.
     ///
@@ -88,22 +75,16 @@ impl DemandFluency<TransactionResult> for TransactionResult {
 /// - The total number of log entries searched
 /// - All log entries with their indices for debugging
 ///
-/// # Examples
+/// # Usage
 ///
-/// ```rust,no_run
-/// use litesvm::LiteSVM;
-/// use litesvm_testing::demand_logs_contain;
-///
-/// let mut svm = LiteSVM::new();
-/// // ... load your program and set up transaction ...
-/// # let payer = Keypair::new();
-/// # let tx = Transaction::new_signed_with_payer(&[], Some(&payer.pubkey()), &[&payer], svm.latest_blockhash());
-///
-/// let result = svm.send_transaction(tx);
-/// assert!(result.is_ok());
-///
-/// // Assert that the logs contain your expected message
+/// Direct function call:
+/// ```text
 /// demand_logs_contain(result, "Hello from anchor!");
+/// ```
+///
+/// Fluent trait method:
+/// ```text
+/// result.demand_logs_contain("Hello from anchor!");
 /// ```
 ///
 /// For complete working examples, see:
