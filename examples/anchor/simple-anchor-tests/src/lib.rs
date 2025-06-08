@@ -1,4 +1,3 @@
-
 /// Load the simple anchor program into LiteSVM
 /// Note: build.rs ensures that the program is built before this is called
 pub fn load_simple_anchor_program(svm: &mut litesvm::LiteSVM) {

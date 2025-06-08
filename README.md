@@ -8,6 +8,7 @@ A Rust library providing testing utilities for Solana programs using [LiteSVM](h
 
 - 🔧 **Build utilities** for Anchor and Pinocchio programs
 - 📋 **Log assertion helpers** with detailed error messages
+- 🎯 **Dual API patterns** - choose direct functions or fluent trait methods
 - 🚀 **Working examples** for multiple Solana frameworks
 - 🎯 **Easy integration** with your existing test suite
 
@@ -52,6 +53,23 @@ fn test_my_program() {
 }
 ```
 
+### Fluent API (Alternative Style)
+
+```rust
+use litesvm::LiteSVM;
+use litesvm_testing::DemandFluency;
+
+#[test]
+fn test_my_program_fluently() {
+    let mut svm = LiteSVM::new();
+    // ... load your program and create transaction ...
+
+    // Chain assertions directly from the transaction result
+    svm.send_transaction(tx)
+        .demand_logs_contain("Hello from my program!");
+}
+```
+
 ## 📚 Framework Support
 
 ### Anchor Programs
@@ -90,7 +108,23 @@ fn main() {
 
 ### `demand_logs_contain`
 
-Asserts that transaction logs contain a specific string. When assertions fail, you get detailed, helpful output:
+Asserts that transaction logs contain a specific string. Available in two styles:
+
+**Direct function call:**
+
+```rust
+use litesvm_testing::demand_logs_contain;
+demand_logs_contain(result, "Hello from my program!");
+```
+
+**Fluent trait method:**
+
+```rust
+use litesvm_testing::DemandFluency;
+result.demand_logs_contain("Hello from my program!");
+```
+
+When assertions fail, you get detailed, helpful output:
 
 ```
 ❌ Log assertion failed!
