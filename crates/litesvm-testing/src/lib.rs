@@ -27,6 +27,33 @@ pub mod pinocchio;
 // #[cfg(feature = "steel")]
 // pub mod steel;
 
+pub use solana_instruction;
+pub use solana_keypair;
+pub use solana_pubkey;
+pub use solana_signer;
+pub use solana_system_interface;
+pub use solana_transaction;
+pub use solana_transaction_error;
+
+pub mod prelude {
+    pub use litesvm;
+    pub use solana_instruction;
+    pub use solana_keypair;
+    pub use solana_pubkey;
+    pub use solana_signer;
+    pub use solana_system_interface;
+    pub use solana_transaction;
+
+    pub use litesvm::LiteSVM;
+    pub use solana_instruction::error::InstructionError;
+    pub use solana_instruction::Instruction;
+    pub use solana_keypair::Keypair;
+    pub use solana_pubkey::Pubkey;
+    pub use solana_signer::Signer;
+    pub use solana_system_interface::error::SystemError;
+    pub use solana_transaction::Transaction;
+}
+
 // "demanding solana"
 // - transaction errors
 // - instruction errors
@@ -35,6 +62,8 @@ pub mod pinocchio;
 // - cu limits
 
 use litesvm::types::TransactionResult;
+use solana_instruction::error::InstructionError;
+use solana_transaction_error::TransactionError;
 
 /// Trait for fluent assertions on transaction results.
 ///
@@ -131,4 +160,89 @@ pub fn demand_logs_contain(result: TransactionResult, expected: &str) {
         Ok(meta) => check_logs(&meta.logs),
         Err(meta) => check_logs(&meta.meta.logs),
     }
+}
+
+/// Asserts that a transaction's instruction error matches the expected error.
+///
+/// This function is designed for testing Solana programs with LiteSVM. It searches through
+/// the transaction error metadata and panics with a detailed error message if the expected
+/// error is not found.
+///
+/// # Arguments
+///
+/// * `result` - The result of executing a transaction via [`litesvm::LiteSVM::send_transaction`]
+/// * `expected_index` - The index of the instruction that should have the expected error
+/// * `expected_error` - The expected error
+///
+pub fn demand_instruction_error(
+    result: TransactionResult,
+    expected_index: u8,
+    expected_error: InstructionError,
+) {
+    match result {
+        Ok(_) => panic!("Expected error but got Ok"),
+        Err(e) => {
+            if let TransactionError::InstructionError(observed_index, observed_error) =
+                e.err.clone()
+            {
+                if observed_index == expected_index && observed_error == expected_error {
+                    return;
+                }
+
+                panic!(
+                    "\n❌ Instruction error assertion failed!\n\
+                    Expected {} error at index {}, got: {:?}",
+                    expected_error, expected_index, e.err
+                );
+            } else {
+                panic!("Expected InstructionError, got: {:?}", e.err);
+            }
+        }
+    }
+}
+
+/// Asserts that a transaction error matches the expected error.
+///
+/// This function tests for transaction-level errors that occur before instruction execution,
+/// such as `AlreadyProcessed`, `InsufficientFundsForFee`, `AccountNotFound`, etc.
+///
+/// # Important Distinction
+///
+/// **Transaction-level errors** occur during transaction validation/processing:
+/// - `TransactionError::AlreadyProcessed` - Transaction already seen
+/// - `TransactionError::InsufficientFundsForFee` - Can't pay transaction fees  
+/// - `TransactionError::AccountNotFound` - Referenced account doesn't exist
+///
+/// **Instruction-level errors** occur during instruction execution:
+/// - `InstructionError::Custom(1)` - System program insufficient funds for transfer
+/// - `InstructionError::Custom(3)` - System program invalid data length
+///
+/// Use [`demand_instruction_error`] for instruction-level errors.
+///
+/// # Arguments
+///
+/// * `expected` - The expected transaction error
+/// * `result` - The result of executing a transaction via [`litesvm::LiteSVM::send_transaction`]
+///
+pub fn demand_transaction_error(expected: TransactionError, result: TransactionResult) {
+    match result {
+        Ok(_) => panic!("Expected error but got Ok"),
+        Err(e) => {
+            if e.err == expected {
+                return;
+            }
+            panic!(
+                "\n❌ Transaction error assertion failed!\n\
+                Expected {}, got: {:?}",
+                expected, e.err
+            );
+        }
+    }
+}
+
+pub fn demand_system_error(
+    _result: TransactionResult,
+    _expected_error: solana_system_interface::error::SystemError,
+) {
+    todo!()
 }

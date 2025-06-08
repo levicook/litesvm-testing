@@ -10,13 +10,74 @@
 
 use {
     anchor_lang::{prelude::ProgramError, InstructionData, ToAccountMetas},
-    litesvm::LiteSVM,
+    litesvm_testing::prelude::*,
     simple_anchor_tests::load_simple_anchor_program,
-    solana_instruction::Instruction,
-    solana_keypair::Keypair,
-    solana_signer::Signer,
-    solana_transaction::Transaction,
 };
+
+/// Test using the direct function call approach
+#[test]
+fn test_use_demand_logs_contain_directly() {
+    use litesvm_testing::demand_logs_contain;
+    let (mut svm, fee_payer) = setup();
+
+    let tx = build_say_hello_tx(&svm, &fee_payer);
+
+    let result = svm.send_transaction(tx);
+    demand_logs_contain(result, "Hello from anchor!");
+}
+
+/// Test using the fluent trait method approach
+#[test]
+fn test_use_demand_logs_contain_fluently() {
+    use litesvm_testing::DemandFluency;
+    let (mut svm, fee_payer) = setup();
+
+    let tx = build_say_hello_tx(&svm, &fee_payer);
+
+    svm.send_transaction(tx)
+        .demand_logs_contain("Hello from anchor!");
+}
+
+/// Test that error transactions work (temporary verification test)
+#[test]
+fn test_error_tx_works() {
+    let (mut svm, fee_payer) = setup();
+
+    let tx = build_program_error_tx(&svm, &fee_payer, ProgramError::InvalidAccountData);
+
+    let result = svm.send_transaction(tx);
+    assert!(result.is_err(), "Transaction should have failed");
+
+    // Verify we get some error logs
+    if let Err(meta) = result {
+        println!("Error logs: {:?}", meta.meta.logs);
+        assert!(!meta.meta.logs.is_empty(), "Should have some logs");
+    }
+}
+
+// BOGUS / but had a useful learning (won't commit, but leaving here for now)
+// /// Test the new demand_instruction_error function
+// #[test]
+// fn test_demand_instruction_error() {
+//     use litesvm_testing::demand_instruction_error;
+//     let (mut svm, fee_payer) = setup();
+
+//     let tx = build_program_error_tx(&svm, &fee_payer, ProgramError::InvalidAccountData);
+
+//     let result = svm.send_transaction(tx);
+
+//     // Debug: Let's see what error we actually get
+//     if let Err(ref meta) = result {
+//         println!("Actual error: {:?}", meta.err);
+//     }
+
+//     // Use the new function to assert the exact error type and index
+//     // ProgramError::InvalidAccountData converts to InstructionError::Custom(17179869184_u32)
+//     let expected_error_code = u64::from(ProgramError::InvalidAccountData) as u32;
+//     demand_instruction_error(result, 0, InstructionError::Custom(expected_error_code));
+// }
+
+// Test utilities:
 
 const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 
@@ -65,45 +126,4 @@ fn build_program_error_tx(svm: &LiteSVM, fee_payer: &Keypair, err: ProgramError)
         &[fee_payer],
         svm.latest_blockhash(),
     )
-}
-
-/// Test using the direct function call approach
-#[test]
-fn test_use_demand_logs_contain_directly() {
-    use litesvm_testing::demand_logs_contain;
-    let (mut svm, fee_payer) = setup();
-
-    let tx = build_say_hello_tx(&svm, &fee_payer);
-
-    let result = svm.send_transaction(tx);
-    demand_logs_contain(result, "Hello from anchor!");
-}
-
-/// Test using the fluent trait method approach
-#[test]
-fn test_use_demand_logs_contain_fluently() {
-    use litesvm_testing::DemandFluency;
-    let (mut svm, fee_payer) = setup();
-
-    let tx = build_say_hello_tx(&svm, &fee_payer);
-
-    svm.send_transaction(tx)
-        .demand_logs_contain("Hello from anchor!");
-}
-
-/// Test that error transactions work (temporary verification test)
-#[test]
-fn test_error_tx_works() {
-    let (mut svm, fee_payer) = setup();
-
-    let tx = build_program_error_tx(&svm, &fee_payer, ProgramError::InvalidAccountData);
-
-    let result = svm.send_transaction(tx);
-    assert!(result.is_err(), "Transaction should have failed");
-
-    // Verify we get some error logs
-    if let Err(meta) = result {
-        println!("Error logs: {:?}", meta.meta.logs);
-        assert!(!meta.meta.logs.is_empty(), "Should have some logs");
-    }
 }

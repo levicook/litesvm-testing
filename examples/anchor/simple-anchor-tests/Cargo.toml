@@ -13,7 +13,3 @@ simple-anchor-program = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 litesvm-testing = { workspace = true, features = ["anchor"] }
-solana-instruction = { workspace = true }
-solana-keypair = { workspace = true }
-solana-signer = { workspace = true }
-solana-transaction = { workspace = true }

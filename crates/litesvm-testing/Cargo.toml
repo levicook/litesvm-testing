@@ -13,3 +13,10 @@ pinocchio = []
 
 [dependencies]
 litesvm = { workspace = true }
+solana-instruction = { workspace = true }
+solana-keypair = { workspace = true }
+solana-pubkey = { workspace = true }
+solana-signer = { workspace = true }
+solana-system-interface = { workspace = true }
+solana-transaction = { workspace = true }
+solana-transaction-error = { workspace = true }
