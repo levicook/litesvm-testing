@@ -1,0 +1,19 @@
+[package]
+name = "simple-anchor-program"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anchor-lang = { workspace = true }
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+idl-build = ["anchor-lang/idl-build"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "simple_anchor_program"
+
+[lints]
+workspace = true

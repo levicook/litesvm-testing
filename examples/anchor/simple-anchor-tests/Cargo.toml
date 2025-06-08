@@ -1,0 +1,16 @@
+[package]
+name = "simple-anchor-tests"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+litesvm-testing = { workspace = true, features = ["anchor"] }
+
+[dependencies]
+anchor-lang = { workspace = true }
+litesvm = { workspace = true }
+simple-anchor-program = { workspace = true, features = ["no-entrypoint"] }
+solana-instruction = { workspace = true }
+solana-keypair = { workspace = true }
+solana-signer = { workspace = true }
+solana-transaction = { workspace = true }

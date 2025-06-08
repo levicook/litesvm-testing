@@ -1,0 +1,14 @@
+[package]
+name = "litesvm-testing"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "litesvm_testing"
+path = "src/lib.rs"
+
+[features]
+anchor = []
+pinocchio = []
+
+[dependencies]

@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/litesvm-testing",
+    "examples/anchor/simple-anchor-program",
+    "examples/anchor/simple-anchor-tests",
+    "examples/pinocchio/simple-pinocchio-program",
+    "examples/pinocchio/simple-pinocchio-tests",
+]
+
+[workspace.dependencies]
+anchor-lang = "0.31.1"
+litesvm = "0.6.1"
+litesvm-testing = { path = "crates/litesvm-testing" }
+solana-instruction = "2.2"
+solana-keypair = "2.2"
+solana-signer = "2.2"
+solana-transaction = "2.2"
+simple-anchor-program = { path = "examples/anchor/simple-anchor-program" }
+simple-anchor-tests = { path = "examples/anchor/simple-anchor-tests" }
+
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = [
+    'cfg(feature, values("custom-heap", "custom-panic", "anchor-debug", "no-idl", "no-log-ix-name"))',
+    'cfg(target_os, values("solana"))',
+] }
