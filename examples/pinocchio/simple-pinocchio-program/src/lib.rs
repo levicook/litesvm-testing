@@ -1,14 +1,20 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use pinocchio_pubkey::declare_id;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+declare_id!("p1XPMdsz55y5Qn5Qh7XPBi7k2DdGbA1LP1SMD52Jqap");
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+#[cfg(feature = "bpf-entrypoint")]
+mod entrypoint {
+    use pinocchio::{account_info::AccountInfo, entrypoint, pubkey::Pubkey, ProgramResult};
+    use pinocchio_log::log;
+
+    entrypoint!(process_instruction);
+
+    pub fn process_instruction(
+        program_id: &Pubkey,
+        _accounts: &[AccountInfo],
+        _instruction_data: &[u8],
+    ) -> ProgramResult {
+        log!("Hello from pinocchio! {}", program_id);
+        Ok(())
     }
 }

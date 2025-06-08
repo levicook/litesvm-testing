@@ -12,3 +12,4 @@ anchor = []
 pinocchio = []
 
 [dependencies]
+litesvm = { workspace = true }

@@ -1,6 +1,7 @@
 use {
     anchor_lang::{InstructionData, ToAccountMetas},
     litesvm::LiteSVM,
+    litesvm_testing::demand_logs_contain,
     simple_anchor_tests::load_simple_anchor_program,
     solana_instruction::Instruction,
     solana_keypair::Keypair,
@@ -8,7 +9,7 @@ use {
     solana_transaction::Transaction,
 };
 
-fn build_initialize_ix() -> Instruction {
+fn build_ix() -> Instruction {
     let ix_accounts = simple_anchor_program::accounts::Initialize {};
     let ix_data = simple_anchor_program::instruction::Initialize {};
     Instruction {
@@ -21,7 +22,7 @@ fn build_initialize_ix() -> Instruction {
 const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 
 #[test]
-fn test_initialize() {
+fn test_simple_anchor_program() {
     let mut svm = LiteSVM::new();
     load_simple_anchor_program(&mut svm);
 
@@ -29,7 +30,7 @@ fn test_initialize() {
     svm.airdrop(&payer.pubkey(), 10 * LAMPORTS_PER_SOL)
         .expect("airdrop failed");
 
-    let ix = build_initialize_ix();
+    let ix = build_ix();
 
     let tx = Transaction::new_signed_with_payer(
         &[ix],
@@ -38,5 +39,8 @@ fn test_initialize() {
         svm.latest_blockhash(),
     );
 
-    assert!(svm.send_transaction(tx).is_ok());
+    let result = svm.send_transaction(tx);
+    assert!(result.is_ok());
+
+    demand_logs_contain(result, "Hello from anchor!");
 }

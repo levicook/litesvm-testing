@@ -5,7 +5,8 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 #[program]
 mod simple_anchor_program {
     use super::*;
-    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        msg!("Hello from anchor! {}", ctx.program_id);
         Ok(())
     }
 }

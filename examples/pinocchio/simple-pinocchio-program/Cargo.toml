@@ -3,4 +3,17 @@ name = "simple-pinocchio-program"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+bpf-entrypoint = []
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "simple_pinocchio_program"
+
+[lints]
+workspace = true
+
 [dependencies]
+pinocchio = { workspace = true }
+pinocchio-log = { workspace = true }
+pinocchio-pubkey = { workspace = true }

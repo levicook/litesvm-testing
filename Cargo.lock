@@ -1748,6 +1748,9 @@ dependencies = [
 [[package]]
 name = "litesvm-testing"
 version = "0.1.0"
+dependencies = [
+ "litesvm",
+]
 
 [[package]]
 name = "lock_api"
@@ -2047,6 +2050,42 @@ name = "pin-utils"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
+
+[[package]]
+name = "pinocchio"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c33b58567c11b07749cefbb8320ac023f3387c57807aeb8e3b1262501b6e9f0"
+
+[[package]]
+name = "pinocchio-log"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f89f8ffd986174cefe59448295a004aaf70c3605f30de066f42d27b06188f267"
+dependencies = [
+ "pinocchio-log-macro",
+]
+
+[[package]]
+name = "pinocchio-log-macro"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6edac6ac2c9c456b850d3e908b7f224a54623f6c5b75906b9e48a4e248fb332b"
+dependencies = [
+ "quote",
+ "regex",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "pinocchio-pubkey"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c6b20fcebc172c3cd3f54114b0241b48fa8e30893ced2eb4927aaba5e3a0ba5"
+dependencies = [
+ "five8_const",
+ "pinocchio",
+]
 
 [[package]]
 name = "pkg-config"
@@ -2552,10 +2591,25 @@ dependencies = [
 [[package]]
 name = "simple-pinocchio-program"
 version = "0.1.0"
+dependencies = [
+ "pinocchio",
+ "pinocchio-log",
+ "pinocchio-pubkey",
+]
 
 [[package]]
 name = "simple-pinocchio-tests"
 version = "0.1.0"
+dependencies = [
+ "litesvm",
+ "litesvm-testing",
+ "pinocchio",
+ "simple-pinocchio-program",
+ "solana-instruction",
+ "solana-keypair",
+ "solana-signer",
+ "solana-transaction",
+]
 
 [[package]]
 name = "slab"

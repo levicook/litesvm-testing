@@ -3,4 +3,17 @@ name = "simple-pinocchio-tests"
 version = "0.1.0"
 edition = "2021"
 
+[build-dependencies]
+litesvm-testing = { workspace = true, features = ["pinocchio"] }
+
 [dependencies]
+pinocchio = { workspace = true }
+litesvm = { workspace = true }
+simple-pinocchio-program = { workspace = true, features = ["bpf-entrypoint"] }
+
+[dev-dependencies]
+litesvm-testing = { workspace = true, features = ["pinocchio"] }
+solana-instruction = { workspace = true }
+solana-keypair = { workspace = true }
+solana-signer = { workspace = true }
+solana-transaction = { workspace = true }

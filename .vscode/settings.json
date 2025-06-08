@@ -1,0 +1,4 @@
+{
+  "rust-analyzer.cargo.features": ["anchor", "bpf-entrypoint", "pinocchio"],
+  "rust-analyzer.cargo.targetDir": "target/vscode"
+}

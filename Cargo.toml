@@ -9,15 +9,23 @@ members = [
 ]
 
 [workspace.dependencies]
-anchor-lang = "0.31.1"
-litesvm = "0.6.1"
+simple-anchor-program = { path = "examples/anchor/simple-anchor-program" }
+simple-anchor-tests = { path = "examples/anchor/simple-anchor-tests" }
+simple-pinocchio-program = { path = "examples/pinocchio/simple-pinocchio-program" }
+simple-pinocchio-tests = { path = "examples/pinocchio/simple-pinocchio-tests" }
+
 litesvm-testing = { path = "crates/litesvm-testing" }
+litesvm = "0.6.1"
+
+anchor-lang = "0.31.1"
 solana-instruction = "2.2"
 solana-keypair = "2.2"
 solana-signer = "2.2"
 solana-transaction = "2.2"
-simple-anchor-program = { path = "examples/anchor/simple-anchor-program" }
-simple-anchor-tests = { path = "examples/anchor/simple-anchor-tests" }
+
+pinocchio = "0.8.4"
+pinocchio-log = "0.4.0"
+pinocchio-pubkey = "0.2.4"
 
 
 [workspace.lints.rust]

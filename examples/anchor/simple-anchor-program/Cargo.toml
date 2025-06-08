@@ -3,9 +3,6 @@ name = "simple-anchor-program"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-anchor-lang = { workspace = true }
-
 [features]
 no-entrypoint = []
 cpi = ["no-entrypoint"]
@@ -17,3 +14,6 @@ name = "simple_anchor_program"
 
 [lints]
 workspace = true
+
+[dependencies]
+anchor-lang = { workspace = true }
