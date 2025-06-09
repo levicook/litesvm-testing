@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  SOLANA_CHANNEL: stable
 
 jobs:
   # Quick CI for the publishable crate
@@ -46,19 +47,40 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Install Solana CLI
+      - name: Setup Solana CLI (robust installation)
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+          # Create directories with proper permissions
+          mkdir -p ~/.cache/solana
+          mkdir -p ~/.local/share/solana/install
+
+          # Download and install Solana CLI using stable channel
+          echo "Installing Solana CLI $SOLANA_CHANNEL..."
+          sh -c "$(curl -sSfL https://release.anza.xyz/$SOLANA_CHANNEL/install)"
+
+          # Add to PATH
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
-      - name: Cache cargo registry
+          # Verify installation
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version
+          cargo --version
+
+          # Verify build-sbf is available
+          command -v cargo-build-sbf || echo "Warning: cargo-build-sbf not found in PATH"
+
+      - name: Cache Solana and cargo
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cache/solana
+            ~/.local/share/solana
             target
-          key: ${{ runner.os }}-solana-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-solana-${{ env.SOLANA_CHANNEL }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-solana-${{ env.SOLANA_CHANNEL }}-cargo-
+            ${{ runner.os }}-solana-${{ env.SOLANA_CHANNEL }}-
 
       - name: Run full CI validation (Makefile)
         run: make ci-full

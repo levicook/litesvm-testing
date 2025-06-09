@@ -7,6 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  SOLANA_CHANNEL: stable
 
 jobs:
   # Run all quality checks first using our Makefile
@@ -21,10 +22,23 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Install Solana CLI
+      - name: Setup Solana CLI (robust installation)
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+          # Create directories with proper permissions
+          mkdir -p ~/.cache/solana
+          mkdir -p ~/.local/share/solana/install
+
+          # Download and install Solana CLI using stable channel  
+          echo "Installing Solana CLI $SOLANA_CHANNEL..."
+          sh -c "$(curl -sSfL https://release.anza.xyz/$SOLANA_CHANNEL/install)"
+
+          # Add to PATH
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+          # Verify installation
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version
+          cargo --version
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -32,6 +46,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cache/solana
+            ~/.local/share/solana
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
