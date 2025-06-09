@@ -2,6 +2,22 @@
 name = "litesvm-testing"
 version = "0.1.0"
 edition = "2021"
+authors = ["LiteSVM Testing Framework Contributors"]
+license = "GPL-3.0-or-later"
+description = "Comprehensive testing framework for Solana programs using LiteSVM with ergonomic assertions"
+repository = "https://github.com/levicook/litesvm-testing"
+homepage = "https://github.com/levicook/litesvm-testing"
+documentation = "https://docs.rs/litesvm-testing"
+readme = "../../README.md"
+keywords = ["solana", "testing", "blockchain", "litesvm", "framework"]
+categories = ["development-tools::testing"]
+include = [
+    "src/**/*",
+    "tests/**/*",
+    "Cargo.toml",
+    "../../README.md",
+    "../../LICENSE",
+]
 
 [lib]
 name = "litesvm_testing"
@@ -13,7 +29,7 @@ pinocchio = []
 
 [dependencies]
 litesvm = { workspace = true }
-num-traits = "0.2.19"
+num-traits = { workspace = true }
 solana-compute-budget-interface = { workspace = true }
 solana-instruction = { workspace = true }
 solana-keypair = { workspace = true }

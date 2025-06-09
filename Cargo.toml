@@ -23,10 +23,13 @@ simple-anchor-tests = { path = "examples/anchor/simple-anchor-tests" }
 simple-pinocchio-program = { path = "examples/pinocchio/simple-pinocchio-program" }
 simple-pinocchio-tests = { path = "examples/pinocchio/simple-pinocchio-tests" }
 
-litesvm-testing = { path = "crates/litesvm-testing" }
-litesvm = "0.6.1"
-
 anchor-lang = "0.31.1"
+litesvm = "0.6.1"
+litesvm-testing = { path = "crates/litesvm-testing" }
+num-traits = "0.2.19"
+pinocchio = "0.8.4"
+pinocchio-log = "0.4.0"
+pinocchio-pubkey = "0.2.4"
 solana-compute-budget-interface = "2.2"
 solana-instruction = "2.2"
 solana-keypair = "2.2"
@@ -35,11 +38,6 @@ solana-signer = "2.2"
 solana-system-interface = "1"
 solana-transaction = "2.2"
 solana-transaction-error = "2.2"
-
-pinocchio = "0.8.4"
-pinocchio-log = "0.4.0"
-pinocchio-pubkey = "0.2.4"
-
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "allow", check-cfg = [

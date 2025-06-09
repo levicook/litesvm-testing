@@ -16,7 +16,7 @@ pub fn build_anchor_program<P: AsRef<Path>>(program_path: P) {
 
     // Build the anchor program
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "build-sbf",
             "--manifest-path",
             &program_manifest.to_string_lossy(),

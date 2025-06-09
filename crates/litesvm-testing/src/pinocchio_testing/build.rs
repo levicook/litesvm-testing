@@ -30,12 +30,10 @@
 //! ## Example usage:
 //!
 //! In your test crate's `build.rs`:
-//! ```rust
+//! ```rust,no_run
 //! use litesvm_testing::pinocchio_testing::build_pinocchio_program;
 //!
-//! fn main() {
-//!     build_pinocchio_program("../my-pinocchio-program");
-//! }
+//! build_pinocchio_program("../my-pinocchio-program");
 //! ```
 
 use std::{path::Path, process::Command};
@@ -55,13 +53,11 @@ use std::{path::Path, process::Command};
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,no_run
 /// // In build.rs
 /// use litesvm_testing::pinocchio_testing::build_pinocchio_program;
 ///
-/// fn main() {
-///     build_pinocchio_program("../simple-pinocchio-program");
-/// }
+/// build_pinocchio_program("../simple-pinocchio-program");
 /// ```
 ///
 /// For custom feature configurations, use [`build_pinocchio_program_with_features`].
@@ -89,8 +85,10 @@ pub fn build_pinocchio_program<P: AsRef<Path>>(program_path: P) {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,no_run
 /// // Custom features for specialized builds
+/// use litesvm_testing::pinocchio_testing::build_pinocchio_program_with_features;
+///
 /// build_pinocchio_program_with_features(
 ///     "../my-program",
 ///     &["bpf-entrypoint", "custom-feature", "debug-mode"]
@@ -122,7 +120,7 @@ pub fn build_pinocchio_program_with_features<P: AsRef<Path>>(program_path: P, fe
 
     // Build the pinocchio program
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "build-sbf",
             "--manifest-path",
             &program_manifest.to_string_lossy(),
