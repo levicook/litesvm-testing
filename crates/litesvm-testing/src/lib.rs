@@ -1,4 +1,5 @@
 //! # LiteSVM Testing Utilities
+//! Copyright (C) 2024 Levi Cook - Licensed under GPL v3.0-or-later
 //!
 //! A comprehensive testing framework for Solana programs using LiteSVM. Provides ergonomic,
 //! type-safe assertions for transaction results, logs, and all levels of Solana errors.
