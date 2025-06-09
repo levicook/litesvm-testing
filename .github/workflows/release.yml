@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Triggers on version tags like v0.1.0, v1.2.3, etc.
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Run all quality checks first using our Makefile
+  pre-release-checks:
+    name: Pre-Release Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Verify tag matches Cargo.toml version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          CARGO_VERSION=$(grep '^version = ' crates/litesvm-testing/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
+            echo "❌ Tag version $TAG_VERSION doesn't match Cargo.toml version $CARGO_VERSION"
+            exit 1
+          fi
+          echo "✅ Tag version matches Cargo.toml version: $TAG_VERSION"
+
+      - name: Run full CI validation (Makefile)
+        run: make ci-full
+
+  # Publish to crates.io
+  publish-crate:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: pre-release-checks
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Publish to crates.io
+        run: cargo publish --manifest-path crates/litesvm-testing/Cargo.toml --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  # Create GitHub release with changelog
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: publish-crate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract changelog for this version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          # Extract changelog section for this version
+          sed -n "/## \[$TAG_VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+          echo "Release notes for v$TAG_VERSION:" 
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
