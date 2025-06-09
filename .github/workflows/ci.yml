@@ -8,86 +8,49 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_CHANNEL: stable
 
 jobs:
-  # Quick CI for the publishable crate
-  publishable-crate:
-    name: Publishable Crate Quality
+  # Quick CI for the publishable crate (native)
+  quick-checks:
+    name: Quick Checks (Native)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: make ci-quick
 
-      - name: Run quick CI checks (Makefile)
-        run: make ci-quick
-
-  # Full workspace validation including Solana programs
-  workspace-validation:
-    name: Full Workspace (inc. Solana Programs)
+  # Complete validation in Docker (matches production environment)
+  docker-validation:
+    name: Docker Validation (Complete)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Setup Solana CLI (robust installation)
-        run: |
-          # Create directories with proper permissions
-          mkdir -p ~/.cache/solana
-          mkdir -p ~/.local/share/solana/install
-
-          # Download and install Solana CLI using stable channel
-          echo "Installing Solana CLI $SOLANA_CHANNEL..."
-          sh -c "$(curl -sSfL https://release.anza.xyz/$SOLANA_CHANNEL/install)"
-
-          # Add to PATH
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-
-          # Pre-initialize platform tools to avoid on-demand download issues
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          echo "Pre-initializing Agave platform tools..."
-          agave-install init --no-modify-path
-
-          # Verify installation
-          solana --version
-          cargo --version
-
-          # Verify build-sbf is available and platform tools are ready
-          cargo-build-sbf --version || echo "Warning: cargo-build-sbf version check failed"
-
-      - name: Cache Solana and cargo
+      # Cache Docker layers for faster subsequent builds
+      - name: Cache Docker layers
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cache/solana
-            ~/.local/share/solana
-            target
-          key: ${{ runner.os }}-solana-${{ env.SOLANA_CHANNEL }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-solana-${{ env.SOLANA_CHANNEL }}-cargo-
-            ${{ runner.os }}-solana-${{ env.SOLANA_CHANNEL }}-
+            ${{ runner.os }}-docker-
 
-      - name: Run full CI validation (Makefile)
-        run: make ci-full
+      # Cache Cargo registry (mounted into container)
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
 
-    # Note: We skip clippy on Solana programs as they require special toolchain handling
-    # The core library clippy is covered in the publishable-crate job
+      - run: make ci-docker-full

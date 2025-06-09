@@ -3,7 +3,7 @@
 # This Makefile provides fast feedback loops for development and
 # standardizes the exact commands that CI should run.
 
-.PHONY: help check test fmt clean ci-quick ci-full ci-local
+.PHONY: help check test fmt clean ci-quick ci-full ci-local ci-docker-quick ci-docker-full ci release-validation publish
 
 # Default target
 help:
@@ -19,6 +19,15 @@ help:
 	@echo "  ci-quick   - Fast CI checks (publishable crate only)"
 	@echo "  ci-full    - Complete workspace validation"
 	@echo "  ci-local   - Full local CI simulation (requires Solana CLI)"
+	@echo ""
+	@echo "Docker CI (matches GitHub Actions exactly):"
+	@echo "  ci-docker-quick - Fast CI in Docker container"
+	@echo "  ci-docker-full  - Complete CI in Docker container"
+	@echo "  ci              - Main CI target (Docker-based)"
+	@echo ""
+	@echo "Release:"
+	@echo "  release-validation - Complete release validation"
+	@echo "  publish            - Publish to crates.io"
 
 # Fast workspace validation - exactly what works
 check:
@@ -87,6 +96,51 @@ ci-local:
 	@echo "Core library publish check:"
 	cargo publish --manifest-path crates/litesvm-testing/Cargo.toml --dry-run --allow-dirty
 	@echo "✅ Local CI passed"
+
+# Docker-based CI targets (matches CI environment exactly)
+ci-docker-quick:
+	@echo "🐳 Running quick CI in Docker container..."
+	@docker pull solanafoundation/anchor:v0.31.1 > /dev/null 2>&1 || true
+	@mkdir -p ~/.cargo
+	docker run --rm \
+		-v $$(pwd):/workspaces/project \
+		-v ~/.cargo:/home/solana/.cargo \
+		-w /workspaces/project \
+		solanafoundation/anchor:v0.31.1 make ci-quick
+
+ci-docker-full:
+	@echo "🐳 Running full CI in Docker container..."
+	@docker pull solanafoundation/anchor:v0.31.1 > /dev/null 2>&1 || true
+	@mkdir -p ~/.cargo
+	docker run --rm \
+		-v $$(pwd):/workspaces/project \
+		-v ~/.cargo:/home/solana/.cargo \
+		-w /workspaces/project \
+		solanafoundation/anchor:v0.31.1 make ci-full
+
+# Main CI target for GitHub Actions (uses Docker for reproducible environment)
+ci: ci-docker-full
+
+# Release validation - comprehensive checks before publishing
+release-validation:
+	@echo "🚀 Running release validation..."
+	@echo "Verifying tag matches Cargo.toml version..."
+	@if [ -n "$$TAG_VERSION" ] && [ -n "$$(grep '^version = ' crates/litesvm-testing/Cargo.toml | sed 's/version = "\(.*\)"/\1/')" ]; then \
+		CARGO_VERSION=$$(grep '^version = ' crates/litesvm-testing/Cargo.toml | sed 's/version = "\(.*\)"/\1/'); \
+		if [ "$$TAG_VERSION" != "$$CARGO_VERSION" ]; then \
+			echo "❌ Tag version $$TAG_VERSION doesn't match Cargo.toml version $$CARGO_VERSION"; \
+			exit 1; \
+		fi; \
+		echo "✅ Tag version matches Cargo.toml version: $$TAG_VERSION"; \
+	fi
+	$(MAKE) ci-docker-full
+	@echo "✅ Release validation passed"
+
+# Publish to crates.io (requires CARGO_REGISTRY_TOKEN)
+publish:
+	@echo "📦 Publishing to crates.io..."
+	cargo publish --manifest-path crates/litesvm-testing/Cargo.toml --token $$CARGO_REGISTRY_TOKEN
+	@echo "✅ Published to crates.io"
 
 # Install tools needed for development
 install-tools:

@@ -1,214 +1,228 @@
 # GitHub Workflows Setup Guide
 
-This repository uses **Makefile-driven CI/CD** where the Makefile is the single source of truth for all build operations.
+This repository uses **ultra-simple workflows** powered by **Docker + Makefile** architecture.
 
-## 🏗️ **Architecture: Makefile as Single Source of Truth**
+## 🏗️ **Architecture: Docker + Makefile = Simple + Powerful**
 
-**Philosophy:** All build logic lives in the `Makefile`. GitHub workflows are just thin orchestration layers that call Makefile targets.
+**Core insight**: Keep GitHub workflows **trivially simple** by moving all complexity into Makefile Docker targets.
+
+```yaml
+# GitHub workflows are dead simple:
+steps:
+  - uses: actions/checkout@v4
+  - run: make ci-docker-full
+```
+
+```makefile
+# Makefile handles Docker complexity:
+ci-docker-full:
+	docker run --rm -v $(PWD):/workspaces/project -w /workspaces/project \
+		solanafoundation/anchor:v0.31.1 make ci-full
+```
 
 **Benefits:**
 
-- ✅ **Consistency** - Same commands work locally and in CI
-- ✅ **No drift** - Only one place to maintain build logic
-- ✅ **Fast feedback** - Test locally with exact same commands as CI
-- ✅ **Debugging** - Reproduce CI issues locally with `make ci-full`
+- ✅ **Dead-simple workflows** - Minimal YAML, maximum power
+- ✅ **Local = CI** - Same Docker environment everywhere
+- ✅ **Battle-tested tools** - Official Solana Foundation container
+- ✅ **Zero drift** - One source of truth in Makefile
+- ✅ **Easy debugging** - `make ci-docker-full` reproduces CI exactly
 
-## 🔧 **Workflows Overview**
+## 🔧 **The Two Workflows**
 
 ### 1. **CI Workflow** (`.github/workflows/ci.yml`)
 
-**Triggers:** Every push to `main` and all pull requests
-**Purpose:** Continuous integration with parallel quality gates
+**Triggers:** Push to `main`, all pull requests  
+**Jobs:**
 
-**What it does:**
-
-- ✅ **Publishable Crate Job** → `make ci-quick`
-- ✅ **Full Workspace Job** → `make ci-full` (includes Solana programs)
-
-**Key insight:** No custom build logic in workflow - just calls Makefile targets!
+- **Quick Checks (Native)** → `make ci-quick` - Fast feedback on publishable crate
+- **Docker Validation (Complete)** → `make ci-docker-full` - Full workspace in production environment
 
 ### 2. **Release Workflow** (`.github/workflows/release.yml`)
 
-**Triggers:** Version tags (e.g., `v0.1.0`, `v1.2.3`)
-**Purpose:** Automated publishing with quality gates
+**Triggers:** Version tags (`v0.1.0`, `v1.2.3`, etc.)  
+**Jobs:**
 
-**What it does:**
+1. **Release Validation** → `make release-validation` - Complete validation in Docker
+2. **Publish** → `make publish` - Push to crates.io
+3. **GitHub Release** - Extract changelog and create release
 
-1. **Pre-release checks** → `make ci-full` (full validation)
-2. **Version validation** - Ensures tag matches `Cargo.toml`
-3. **Publish to crates.io** - Uses `CARGO_REGISTRY_TOKEN` secret
-4. **GitHub release** - Extracts notes from `CHANGELOG.md`
+## 🎯 **Docker Container: solanafoundation/anchor:v0.31.1**
 
-## 🎯 **Makefile Targets (The Real CI)**
+This is the **official Anchor Docker image** used by `anchor build --verifiable`:
+
+- ✅ **Solana CLI** (2.1.0)
+- ✅ **Anchor** (0.31.1)
+- ✅ **Rust/Cargo** (latest)
+- ✅ **cargo-build-sbf** (Solana BPF builder)
+- ✅ **Platform tools** (v1.43)
+
+**No manual installation required** - everything just works!
+
+## 🚀 **Makefile Targets**
 
 ```bash
-# Development workflow
-make check      # Fast workspace validation
-make test       # All tests including Solana programs
-make fmt        # Format code
-make ci-local   # Full local CI with all checks
+# Development (native)
+make check           # Fast workspace check
+make test            # All tests
+make fmt            # Format code
+make ci-local       # Local CI with full tools
 
-# CI targets (what workflows call)
-make ci-quick   # Fast feedback - publishable crate only
-make ci-full    # Complete validation - all packages
+# Docker CI (matches production)
+make ci-docker-quick    # Fast CI in Docker
+make ci-docker-full     # Complete CI in Docker
+make ci                 # Main CI target (Docker-based)
+
+# Release
+make release-validation # Complete release checks
+make publish           # Publish to crates.io
 ```
 
 ## ⚙️ **Setup Requirements**
 
 ### **Required GitHub Secrets**
 
-Add these in **Settings → Secrets and variables → Actions**:
+**Settings → Secrets and variables → Actions:**
 
-1. **`CARGO_REGISTRY_TOKEN`** (Required for publishing)
+1. **`CARGO_REGISTRY_TOKEN`** (Required for releases)
 
    ```bash
-   # Get token from https://crates.io/me
-   # Add as repository secret
+   # Get from: https://crates.io/me
+   # Permissions: "Publish new crates" + "Publish updates"
    ```
 
-2. **`GITHUB_TOKEN`** (Automatically provided)
-   - Used for creating GitHub releases
-   - No setup required
+2. **`GITHUB_TOKEN`** - Automatically provided, no setup needed
 
-### **Required Branch Protection**
+### **Branch Protection**
 
-Configure **Settings → Branches → Add rule** for `main`:
+**Settings → Branches → Add rule** for `main`:
 
-- ✅ Require status checks: `Publishable Crate Quality`, `Full Workspace (inc. Solana Programs)`
-- ✅ Require up-to-date branches
+- ✅ Require status checks: `Quick Checks (Native)`, `Docker Validation (Complete)`
+- ✅ Require up-to-date branches before merging
 - ✅ Include administrators
 
-## 🚀 **Publishing Workflow**
+## 🚀 **Publishing Process**
 
-### **Automatic Publishing (Recommended)**
+### **Automatic (Recommended)**
 
 ```bash
-# 1. Update version in Cargo.toml
+# 1. Update version
 vim crates/litesvm-testing/Cargo.toml
 
-# 2. Update CHANGELOG.md with new version section
+# 2. Update changelog
 vim CHANGELOG.md
 
-# 3. Commit and push
+# 3. Commit and tag
 git add -A && git commit -m "Release v0.1.0"
-git push
+git tag v0.1.0 && git push origin main v0.1.0
 
-# 4. Create and push tag
-git tag v0.1.0
-git push origin v0.1.0
-
-# 5. Watch the magic happen ✨
-# - CI validates everything
-# - Publishes to crates.io
-# - Creates GitHub release
+# 4. Watch automation ✨
+# → Docker validation
+# → crates.io publishing
+# → GitHub release creation
 ```
 
-### **Manual Publishing (Fallback)**
+### **Local Testing (Before Release)**
 
 ```bash
-# Test locally first
-make ci-full
+# Test exact release process locally
+TAG_VERSION="0.1.0" make release-validation
 
-# Publish manually
-cargo publish --manifest-path crates/litesvm-testing/Cargo.toml
+# Or full Docker CI
+make ci-docker-full
 ```
 
 ## 🐛 **Debugging CI Issues**
 
-**The beauty of Makefile-driven CI:**
+**The magic of Docker-based CI:**
 
 ```bash
-# Reproduce exact CI failure locally
-make ci-full
+# Reproduce CI failure exactly:
+make ci-docker-full
 
-# Or run specific CI subset
-make ci-quick
+# Or just the quick checks:
+make ci-docker-quick
 
-# Debug individual steps
-make check && make test
+# Debug step by step:
+docker run --rm -v $(pwd):/workspaces/project -w /workspaces/project \
+  solanafoundation/anchor:v0.31.1 bash
+# Then run individual commands inside container
 ```
 
-**No more "works on my machine" - if `make ci-full` passes locally, CI will pass!**
+**If `make ci-docker-full` passes locally, CI will pass!**
 
 ## 📊 **Local Development Workflow**
 
 ```bash
-# Fast feedback loop
-make check      # Quick validation
-make test       # Run all tests
+# Fast development loop (native tools)
+make check          # Quick validation
+make test           # Run tests
+make fmt            # Format code
 
-# Before pushing
-make ci-full    # Complete CI simulation
+# Before pushing (Docker validation)
+make ci-docker-full # Exact CI environment
 
-# Code quality
-make fmt        # Format code
-make ci-local   # Everything including clippy
+# Quick Docker check
+make ci-docker-quick # Fast Docker validation
 ```
 
-## 🎯 **Key Design Decisions**
+## 🎯 **Key Design Principles**
 
-1. **Makefile is canonical** - Workflows delegate to `make` targets
-2. **Parallel CI jobs** - Fast feedback + comprehensive validation
-3. **Solana toolchain isolation** - Different cache keys, proper setup
-4. **Version validation** - Tag must match `Cargo.toml`
-5. **Changelog integration** - Release notes from `CHANGELOG.md`
+1. **Workflows are thin wrappers** - Real logic in Makefile
+2. **Docker for consistency** - Same environment everywhere
+3. **Official containers** - Battle-tested, maintained by Solana Foundation
+4. **Parallel jobs** - Fast feedback + thorough validation
+5. **Version validation** - Tag must match `Cargo.toml`
 
-This architecture ensures your CI/CD is **maintainable, debuggable, and reliable**! 🎉
+## 🔍 **Quality Standards**
 
-## 📋 Quality Standards
+Enforced automatically:
 
-The workflows enforce these standards:
+- ✅ **Zero clippy warnings** (`-D warnings`)
+- ✅ **Proper formatting** (`cargo fmt --check`)
+- ✅ **All tests pass** (including Solana programs)
+- ✅ **Documentation builds** cleanly
+- ✅ **Publish dry-run** succeeds
+- ✅ **Version consistency** (tag ↔ Cargo.toml)
 
-- **Zero clippy warnings** (using `-D warnings`)
-- **Proper formatting** (using `cargo fmt`)
-- **All tests pass**
-- **Documentation builds** without errors
-- **Version consistency** between tags and Cargo.toml
-- **Dry-run publish success** before real publication
+## 🛠️ **Troubleshooting**
 
-## 🔍 Monitoring
+### **Common Issues**
 
-**CI Status:**
+**"Tag version doesn't match Cargo.toml"**
 
-- Check the "Actions" tab for build status
-- PR checks must pass before merging
-- Main branch status visible in repository badges
+```bash
+# Check versions match:
+git describe --tags           # v0.1.0
+grep '^version = ' crates/litesvm-testing/Cargo.toml  # version = "0.1.0"
+```
 
-**Release Status:**
+**"Docker container fails"**
 
-- Failed releases are visible in Actions tab
-- GitHub releases are created automatically on success
-- crates.io publication status is logged in workflow
+```bash
+# Test Docker setup locally:
+docker pull solanafoundation/anchor:v0.31.1
+make ci-docker-quick
+```
 
-## 🛠️ Troubleshooting
+**"crates.io token invalid"**
 
-**Common Issues:**
+```bash
+# Verify secret is set in GitHub:
+# Settings → Secrets → CARGO_REGISTRY_TOKEN
+```
 
-1. **"Tag version doesn't match Cargo.toml"**
+### **Advanced Debugging**
 
-   - Ensure the git tag matches the version in `crates/litesvm-testing/Cargo.toml`
-   - Format: tag `v0.1.0` should match version `0.1.0`
+```bash
+# Interactive Docker debugging:
+docker run -it --rm -v $(pwd):/workspaces/project -w /workspaces/project \
+  solanafoundation/anchor:v0.31.1 bash
 
-2. **"crates.io token invalid"**
+# Inside container:
+make ci-full          # Run full CI
+solana --version      # Check tool versions
+cargo clippy          # Test individual commands
+```
 
-   - Check that `CRATES_IO_TOKEN` secret is set correctly
-   - Ensure the token has publishing permissions
-
-3. **"Clippy warnings blocking CI"**
-
-   - Run `cargo clippy --all-features -- -D warnings` locally
-   - Fix all warnings before pushing
-
-4. **"Examples failing"**
-   - Examples are non-blocking in CI
-   - Check Solana CLI installation and toolchain setup
-
-## 🎯 Benefits
-
-This setup provides:
-
-- **Quality assurance** - No broken code reaches main
-- **Automated publishing** - Reduces manual errors
-- **Consistent releases** - Standardized process
-- **Visibility** - Clear status of builds and releases
-- **Professional polish** - Shows attention to quality
+This architecture ensures **reliable, maintainable, and debuggable** CI/CD! 🎉
