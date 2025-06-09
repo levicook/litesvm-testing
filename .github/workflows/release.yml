@@ -35,8 +35,12 @@ jobs:
           # Add to PATH
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
-          # Verify installation
+          # Pre-initialize platform tools to avoid on-demand download issues
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          echo "Pre-initializing Agave platform tools..."
+          agave-install init --no-modify-path
+
+          # Verify installation
           solana --version
           cargo --version
 
