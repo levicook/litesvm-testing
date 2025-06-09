@@ -7,7 +7,7 @@ A comprehensive testing framework for Solana programs using [LiteSVM](https://gi
 ## ✨ Features
 
 - 🎯 **Complete Error Testing**: Transaction, instruction, and system program errors with type safety
-- 📋 **Log Assertions**: Detailed log content verification with helpful error messages  
+- 📋 **Log Assertions**: Detailed log content verification with helpful error messages
 - 🔧 **Build System Integration**: Automatic program compilation for Anchor and Pinocchio
 - ⚡ **Dual API Styles**: Direct function calls or fluent method syntax
 - 🎪 **Precision Control**: "Anywhere" matching vs surgical instruction-index targeting
@@ -48,10 +48,10 @@ fn test_my_program() {
     // ... load your program and create transaction ...
 
     let result = svm.send_transaction(tx);
-    
+
     // Test successful execution
     result.demand_logs_contain("Hello from my program!");
-    
+
     // Or test error conditions with type safety
     result.demand_system_error(SystemError::ResultWithNegativeLamports);
 }
@@ -68,7 +68,7 @@ fn test_my_program_fluently() {
     // ... load your program and create transaction ...
 
     let result = svm.send_transaction(tx);
-    
+
     // Call assertions as methods on the result
     result.demand_logs_contain("Hello from my program!");
     result.demand_instruction_error_at_index(1, InstructionError::Custom(42));
@@ -80,13 +80,17 @@ fn test_my_program_fluently() {
 Test errors at every level of the Solana execution model:
 
 ### 🏗️ Transaction Level
+
 Validation errors before execution:
+
 ```rust
 result.demand_transaction_error(TransactionError::AlreadyProcessed);
 ```
 
-### 📍 Instruction Level  
+### 📍 Instruction Level
+
 Errors during instruction execution:
+
 ```rust
 // "Anywhere" - don't care which instruction failed
 result.demand_instruction_error(InstructionError::Custom(1));
@@ -96,12 +100,14 @@ result.demand_instruction_error_at_index(1, InstructionError::Custom(1));
 ```
 
 ### ⚙️ System Program Level
+
 Type-safe system program errors:
+
 ```rust
 // "Anywhere" - system error occurred somewhere
 result.demand_system_error(SystemError::ResultWithNegativeLamports);
 
-// "Surgical" - specific instruction produced system error  
+// "Surgical" - specific instruction produced system error
 result.demand_system_error_at_index(1, SystemError::AccountAlreadyInUse);
 ```
 
@@ -135,7 +141,7 @@ litesvm-testing = { git = "...", features = ["pinocchio"] }
 ```
 
 ```rust
-// build.rs  
+// build.rs
 use litesvm_testing::pinocchio_testing::build_pinocchio_program;
 
 fn main() {
@@ -170,7 +176,7 @@ result.demand_transaction_error(TransactionError::AccountNotFound);
 result.demand_instruction_error(InstructionError::Custom(1));
 result.demand_instruction_error(InstructionError::InvalidAccountData);
 
-// Test specific instruction failure  
+// Test specific instruction failure
 result.demand_instruction_error_at_index(1, InstructionError::Custom(42));
 ```
 
@@ -195,12 +201,14 @@ let (mut svm, fee_payer) = setup_svm_and_fee_payer();
 ## 🎪 API Styles: Choose Your Preference
 
 **Direct Functions** (traditional):
+
 ```rust
 demand_logs_contain("Hello!", result);
 demand_system_error(SystemError::InsufficientFunds, result);
 ```
 
 **Fluent Methods** (alternative syntax):
+
 ```rust
 result.demand_logs_contain("Hello!");
 result.demand_system_error(SystemError::InsufficientFunds);
@@ -215,16 +223,19 @@ Both styles provide identical functionality - choose what feels right for your t
 This repository includes comprehensive, documented examples:
 
 ### Anchor Framework
+
 - **Program**: [`examples/anchor/simple-anchor-program/`](examples/anchor/simple-anchor-program/)
-- **Tests**: [`examples/anchor/simple-anchor-tests/`](examples/anchor/simple-anchor-tests/) 
+- **Tests**: [`examples/anchor/simple-anchor-tests/`](examples/anchor/simple-anchor-tests/)
 - **Features**: IDL integration, automatic compilation, complete build documentation
 
-### Pinocchio Framework  
+### Pinocchio Framework
+
 - **Program**: [`examples/pinocchio/simple-pinocchio-program/`](examples/pinocchio/simple-pinocchio-program/)
 - **Tests**: [`examples/pinocchio/simple-pinocchio-tests/`](examples/pinocchio/simple-pinocchio-tests/)
 - **Features**: Minimal boilerplate, lightweight setup, direct BPF compilation
 
 ### Educational Test Suite
+
 - **API Progression**: [`tests/test_system_error_insufficient_funds.rs`](crates/litesvm-testing/tests/test_system_error_insufficient_funds.rs)
 - **Features**: Good → Better → Best → Best+ progression, demonstrates all API styles
 
@@ -293,13 +304,13 @@ litesvm-testing/
 │   └── litesvm-testing/           # Core library with comprehensive docs
 │       ├── src/
 │       │   ├── lib.rs             # Main API and documentation
-│       │   ├── anchor_testing/    # Anchor build utilities  
+│       │   ├── anchor_testing/    # Anchor build utilities
 │       │   └── pinocchio_testing/ # Pinocchio build utilities
 │       └── tests/                 # Educational test examples
 ├── examples/
 │   ├── anchor/                    # Complete Anchor integration
 │   │   ├── simple-anchor-program/
-│   │   └── simple-anchor-tests/   
+│   │   └── simple-anchor-tests/
 │   └── pinocchio/                 # Complete Pinocchio integration
 │       ├── simple-pinocchio-program/
 │       └── simple-pinocchio-tests/
@@ -312,7 +323,7 @@ litesvm-testing/
 - [x] **Complete error testing framework** (transaction, instruction, system)
 - [x] **Type-safe system error handling**
 - [x] **Anchor and Pinocchio build support** with comprehensive documentation
-- [x] **Working examples for both frameworks** with educational progression  
+- [x] **Working examples for both frameworks** with educational progression
 - [x] **Dual API styles** (direct functions + fluent method syntax)
 - [x] **Precision control** ("anywhere" vs "surgical" assertions)
 - [ ] **Steel framework support**
@@ -331,14 +342,10 @@ This library is designed not just as a tool, but as a learning resource:
 
 ## 📝 License
 
-This project is licensed under [your chosen license].
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+This project is dual licensed under GPL-3.0-or-later and CC BY-SA 4.0. See LICENSE for details.
 
 ## 🔗 Related Projects
 
 - [LiteSVM](https://github.com/LiteSVM/litesvm) - Fast Solana VM for testing
-- [Anchor](https://github.com/coral-xyz/anchor) - Solana development framework  
+- [Anchor](https://github.com/coral-xyz/anchor) - Solana development framework
 - [Pinocchio](https://github.com/anza-xyz/pinocchio) - Lightweight Solana SDK
