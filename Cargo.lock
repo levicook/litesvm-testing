@@ -1750,6 +1750,15 @@ name = "litesvm-testing"
 version = "0.1.0"
 dependencies = [
  "litesvm",
+ "num-traits",
+ "solana-compute-budget-interface",
+ "solana-instruction",
+ "solana-keypair",
+ "solana-pubkey",
+ "solana-signer",
+ "solana-system-interface",
+ "solana-transaction",
+ "solana-transaction-error",
 ]
 
 [[package]]
@@ -2582,10 +2591,6 @@ dependencies = [
  "litesvm",
  "litesvm-testing",
  "simple-anchor-program",
- "solana-instruction",
- "solana-keypair",
- "solana-signer",
- "solana-transaction",
 ]
 
 [[package]]
@@ -2605,10 +2610,6 @@ dependencies = [
  "litesvm-testing",
  "pinocchio",
  "simple-pinocchio-program",
- "solana-instruction",
- "solana-keypair",
- "solana-signer",
- "solana-transaction",
 ]
 
 [[package]]

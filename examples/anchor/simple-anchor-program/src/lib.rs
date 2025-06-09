@@ -10,12 +10,6 @@ mod simple_anchor_program {
         msg!("Hello from anchor! {}", ctx.program_id);
         Ok(())
     }
-
-    pub fn fail_with_program_error(_ctx: Context<FailInstruction>, error_code: u64) -> Result<()> {
-        let program_error = ProgramError::from(error_code);
-        msg!("About to fail with {:?}", program_error);
-        Err(program_error.into())
-    }
 }
 
 #[derive(Accounts)]

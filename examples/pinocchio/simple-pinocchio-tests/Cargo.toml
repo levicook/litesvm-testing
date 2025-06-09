@@ -13,7 +13,9 @@ simple-pinocchio-program = { workspace = true, features = ["bpf-entrypoint"] }
 
 [dev-dependencies]
 litesvm-testing = { workspace = true, features = ["pinocchio"] }
-solana-instruction = { workspace = true }
-solana-keypair = { workspace = true }
-solana-signer = { workspace = true }
-solana-transaction = { workspace = true }
+
+# Should all be re-exported from litesvm-testing:
+# solana-instruction = { workspace = true }
+# solana-keypair = { workspace = true }
+# solana-signer = { workspace = true }
+# solana-transaction = { workspace = true }

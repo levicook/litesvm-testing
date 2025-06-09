@@ -1,16 +1,19 @@
 # litesvm-testing
 
-A Rust library providing testing utilities for Solana programs using [LiteSVM](https://github.com/LiteSVM/litesvm).
+A comprehensive testing framework for Solana programs using [LiteSVM](https://github.com/LiteSVM/litesvm). Provides ergonomic, type-safe assertions for transaction results, logs, and all levels of Solana errors.
 
 > **⚠️ Development Status**: This library is currently in active development. The API may change before the first stable release. We plan to publish to [crates.io](https://crates.io) once the API stabilizes.
 
 ## ✨ Features
 
-- 🔧 **Build utilities** for Anchor and Pinocchio programs
-- 📋 **Log assertion helpers** with detailed error messages
-- 🎯 **Dual API patterns** - choose direct functions or fluent trait methods
-- 🚀 **Working examples** for multiple Solana frameworks
-- 🎯 **Easy integration** with your existing test suite
+- 🎯 **Complete Error Testing**: Transaction, instruction, and system program errors with type safety
+- 📋 **Log Assertions**: Detailed log content verification with helpful error messages  
+- 🔧 **Build System Integration**: Automatic program compilation for Anchor and Pinocchio
+- ⚡ **Dual API Styles**: Direct function calls or fluent method syntax
+- 🎪 **Precision Control**: "Anywhere" matching vs surgical instruction-index targeting
+- 🛡️ **Type Safety**: Work with `SystemError` enums instead of raw error codes
+- 📚 **Educational Examples**: Learn API progression from verbose to elegant
+- 🚀 **Framework Support**: Anchor, Pinocchio, with more coming
 
 ## 🚀 Quick Start
 
@@ -37,42 +40,76 @@ litesvm = "0.6.1"
 ### Basic Usage
 
 ```rust
-use litesvm::LiteSVM;
-use litesvm_testing::demand_logs_contain;
+use litesvm_testing::prelude::*;
 
 #[test]
 fn test_my_program() {
-    let mut svm = LiteSVM::new();
+    let (mut svm, fee_payer) = setup_svm_and_fee_payer();
     // ... load your program and create transaction ...
 
     let result = svm.send_transaction(tx);
-    assert!(result.is_ok());
-
-    // Assert log content with helpful error messages
-    demand_logs_contain(result, "Hello from my program!");
+    
+    // Test successful execution
+    result.demand_logs_contain("Hello from my program!");
+    
+    // Or test error conditions with type safety
+    result.demand_system_error(SystemError::ResultWithNegativeLamports);
 }
 ```
 
-### Fluent API (Alternative Style)
+### Fluent API (Method Style)
 
 ```rust
-use litesvm::LiteSVM;
-use litesvm_testing::DemandFluency;
+use litesvm_testing::prelude::*;
 
 #[test]
 fn test_my_program_fluently() {
-    let mut svm = LiteSVM::new();
+    let (mut svm, fee_payer) = setup_svm_and_fee_payer();
     // ... load your program and create transaction ...
 
-    // Chain assertions directly from the transaction result
-    svm.send_transaction(tx)
-        .demand_logs_contain("Hello from my program!");
+    let result = svm.send_transaction(tx);
+    
+    // Call assertions as methods on the result
+    result.demand_logs_contain("Hello from my program!");
+    result.demand_instruction_error_at_index(1, InstructionError::Custom(42));
 }
+```
+
+## 🎯 Error Testing Hierarchy
+
+Test errors at every level of the Solana execution model:
+
+### 🏗️ Transaction Level
+Validation errors before execution:
+```rust
+result.demand_transaction_error(TransactionError::AlreadyProcessed);
+```
+
+### 📍 Instruction Level  
+Errors during instruction execution:
+```rust
+// "Anywhere" - don't care which instruction failed
+result.demand_instruction_error(InstructionError::Custom(1));
+
+// "Surgical" - specific instruction must fail
+result.demand_instruction_error_at_index(1, InstructionError::Custom(1));
+```
+
+### ⚙️ System Program Level
+Type-safe system program errors:
+```rust
+// "Anywhere" - system error occurred somewhere
+result.demand_system_error(SystemError::ResultWithNegativeLamports);
+
+// "Surgical" - specific instruction produced system error  
+result.demand_system_error_at_index(1, SystemError::AccountAlreadyInUse);
 ```
 
 ## 📚 Framework Support
 
 ### Anchor Programs
+
+Complete build system integration with IDL support:
 
 ```toml
 [build-dependencies]
@@ -81,14 +118,16 @@ litesvm-testing = { git = "...", features = ["anchor"] }
 
 ```rust
 // build.rs
-use litesvm_testing::anchor::build_anchor_program;
+use litesvm_testing::anchor_testing::build_anchor_program;
 
 fn main() {
-    build_anchor_program("path/to/anchor/program");
+    build_anchor_program("../my-anchor-program");
 }
 ```
 
 ### Pinocchio Programs
+
+Lightweight compilation with minimal boilerplate:
 
 ```toml
 [build-dependencies]
@@ -96,58 +135,98 @@ litesvm-testing = { git = "...", features = ["pinocchio"] }
 ```
 
 ```rust
-// build.rs
-use litesvm_testing::pinocchio::build_pinocchio_program;
+// build.rs  
+use litesvm_testing::pinocchio_testing::build_pinocchio_program;
 
 fn main() {
-    build_pinocchio_program("path/to/pinocchio/program");
+    build_pinocchio_program("../my-pinocchio-program");
 }
 ```
 
-## 🎯 Testing Utilities
+## 🎯 Complete Testing Utilities
 
-### `demand_logs_contain`
-
-Asserts that transaction logs contain a specific string. Available in two styles:
-
-**Direct function call:**
+### Log Assertions
 
 ```rust
-use litesvm_testing::demand_logs_contain;
-demand_logs_contain(result, "Hello from my program!");
-```
-
-**Fluent trait method:**
-
-```rust
-use litesvm_testing::DemandFluency;
+// Search all logs for content
 result.demand_logs_contain("Hello from my program!");
+
+// Check specific log entry by index
+result.demand_logs_contain_at_index("Specific message", 2);
 ```
 
-When assertions fail, you get detailed, helpful output:
+### Transaction Error Testing
 
+```rust
+// Test transaction-level failures
+result.demand_transaction_error(TransactionError::InsufficientFundsForFee);
+result.demand_transaction_error(TransactionError::AccountNotFound);
 ```
-❌ Log assertion failed!
-Expected to find: "Hello from my program!" in one of 4 log entries:
-  [0]: Program 11111111111111111111111111111111 invoke [1]
-  [1]: Program log: Hello from anchor! Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS
-  [2]: Program 11111111111111111111111111111111 consumed 11832 of 200000 compute units
-  [3]: Program 11111111111111111111111111111111 success
+
+### Instruction Error Testing
+
+```rust
+// Test any instruction failure
+result.demand_instruction_error(InstructionError::Custom(1));
+result.demand_instruction_error(InstructionError::InvalidAccountData);
+
+// Test specific instruction failure  
+result.demand_instruction_error_at_index(1, InstructionError::Custom(42));
 ```
+
+### System Error Testing (Type-Safe)
+
+```rust
+// Test system program errors anywhere
+result.demand_system_error(SystemError::ResultWithNegativeLamports);
+result.demand_system_error(SystemError::AccountAlreadyInUse);
+
+// Test system errors at specific instruction
+result.demand_system_error_at_index(0, SystemError::InsufficientFunds);
+```
+
+### Convenience Setup
+
+```rust
+// Quick SVM setup with funded fee payer
+let (mut svm, fee_payer) = setup_svm_and_fee_payer();
+```
+
+## 🎪 API Styles: Choose Your Preference
+
+**Direct Functions** (traditional):
+```rust
+demand_logs_contain("Hello!", result);
+demand_system_error(SystemError::InsufficientFunds, result);
+```
+
+**Fluent Methods** (alternative syntax):
+```rust
+result.demand_logs_contain("Hello!");
+result.demand_system_error(SystemError::InsufficientFunds);
+```
+
+Both styles provide identical functionality - choose what feels right for your team!
+
+> **Note**: Chainable fluent methods (`DemandChaining`) are planned for a future release, which will enable `result.demand_x().demand_y().accept()` style chaining.
 
 ## 📖 Complete Examples
 
-This repository includes working examples for multiple frameworks:
+This repository includes comprehensive, documented examples:
 
-### Anchor
-
+### Anchor Framework
 - **Program**: [`examples/anchor/simple-anchor-program/`](examples/anchor/simple-anchor-program/)
-- **Tests**: [`examples/anchor/simple-anchor-tests/`](examples/anchor/simple-anchor-tests/)
+- **Tests**: [`examples/anchor/simple-anchor-tests/`](examples/anchor/simple-anchor-tests/) 
+- **Features**: IDL integration, automatic compilation, complete build documentation
 
-### Pinocchio
-
+### Pinocchio Framework  
 - **Program**: [`examples/pinocchio/simple-pinocchio-program/`](examples/pinocchio/simple-pinocchio-program/)
 - **Tests**: [`examples/pinocchio/simple-pinocchio-tests/`](examples/pinocchio/simple-pinocchio-tests/)
+- **Features**: Minimal boilerplate, lightweight setup, direct BPF compilation
+
+### Educational Test Suite
+- **API Progression**: [`tests/test_system_error_insufficient_funds.rs`](crates/litesvm-testing/tests/test_system_error_insufficient_funds.rs)
+- **Features**: Good → Better → Best → Best+ progression, demonstrates all API styles
 
 ## 🏃‍♂️ Running Examples
 
@@ -160,8 +239,11 @@ cd litesvm-testing
 cargo test --workspace --no-fail-fast -- --show-output
 
 # Run specific framework tests
-cargo test -p simple-anchor-tests
-cargo test -p simple-pinocchio-tests
+cargo test -p simple-anchor-tests -- --show-output
+cargo test -p simple-pinocchio-tests -- --show-output
+
+# Run educational test suite
+cargo test -p litesvm-testing test_system_error -- --show-output
 ```
 
 ## 🛠️ Prerequisites
@@ -208,27 +290,44 @@ rustc --version
 ```
 litesvm-testing/
 ├── crates/
-│   └── litesvm-testing/     # Core library
+│   └── litesvm-testing/           # Core library with comprehensive docs
+│       ├── src/
+│       │   ├── lib.rs             # Main API and documentation
+│       │   ├── anchor_testing/    # Anchor build utilities  
+│       │   └── pinocchio_testing/ # Pinocchio build utilities
+│       └── tests/                 # Educational test examples
 ├── examples/
-│   ├── anchor/              # Anchor framework examples
+│   ├── anchor/                    # Complete Anchor integration
 │   │   ├── simple-anchor-program/
-│   │   └── simple-anchor-tests/
-│   └── pinocchio/           # Pinocchio framework examples
+│   │   └── simple-anchor-tests/   
+│   └── pinocchio/                 # Complete Pinocchio integration
 │       ├── simple-pinocchio-program/
 │       └── simple-pinocchio-tests/
-└── README.md
+└── README.md                      # This file
 ```
 
 ## 🗺️ Roadmap
 
 - [x] **Core log assertion utilities**
-- [x] **Anchor and Pinocchio build support**
-- [x] **Working examples for both frameworks**
-- [ ] **API stabilization and documentation review**
-- [ ] **Additional testing utilities** (error assertions, compute unit checks, etc.)
+- [x] **Complete error testing framework** (transaction, instruction, system)
+- [x] **Type-safe system error handling**
+- [x] **Anchor and Pinocchio build support** with comprehensive documentation
+- [x] **Working examples for both frameworks** with educational progression  
+- [x] **Dual API styles** (direct functions + fluent method syntax)
+- [x] **Precision control** ("anywhere" vs "surgical" assertions)
 - [ ] **Steel framework support**
+- [ ] **Additional testing utilities** (compute unit checks, account state, etc.)
 - [ ] **First stable release (v0.1.0) to crates.io**
 - [ ] **Integration with popular Solana testing patterns**
+
+## 🎓 Educational Value
+
+This library is designed not just as a tool, but as a learning resource:
+
+- **Progressive examples**: See how testing approaches evolve from verbose to elegant
+- **Framework comparisons**: Understand trade-offs between Anchor and Pinocchio
+- **Complete documentation**: Every function includes usage examples and context
+- **Real error scenarios**: Test actual system program failures, not synthetic examples
 
 ## 📝 License
 
@@ -241,5 +340,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 🔗 Related Projects
 
 - [LiteSVM](https://github.com/LiteSVM/litesvm) - Fast Solana VM for testing
-- [Anchor](https://github.com/coral-xyz/anchor) - Solana development framework
+- [Anchor](https://github.com/coral-xyz/anchor) - Solana development framework  
 - [Pinocchio](https://github.com/anza-xyz/pinocchio) - Lightweight Solana SDK
