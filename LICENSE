@@ -1,0 +1,48 @@
+LiteSVM Testing Framework - Dual Licensing
+==========================================
+
+This project uses dual licensing to appropriately cover different types of content:
+
+## Software Components (GPL-3.0-or-later)
+All software code, including but not limited to:
+- Rust source code (*.rs files)
+- The litesvm-testing library
+- Test frameworks and utilities
+- Build scripts and configuration
+- Compiled binaries and libraries
+
+Licensed under: GNU General Public License v3.0 or later
+License file: COPYING
+License URL: https://www.gnu.org/licenses/gpl-3.0.html
+
+## Educational Content (CC BY-SA 4.0)
+All educational and documentation materials, including but not limited to:
+- Documentation files (*.md files)
+- README files
+- Tutorial content
+- Example explanations and educational commentary
+- Code comments explaining educational concepts
+
+Licensed under: Creative Commons Attribution-ShareAlike 4.0 International
+License file: LICENSE-CONTENT  
+License URL: https://creativecommons.org/licenses/by-sa/4.0/
+
+## Why Dual Licensing?
+
+- **GPL-3.0-or-later** ensures that improvements to the software remain open source
+  and available to the community (copyleft protection)
+
+- **CC BY-SA 4.0** makes educational content more accessible for teaching, learning,
+  and integration into educational materials while still requiring attribution and
+  keeping improvements open
+
+## Questions?
+
+If you're unsure which license applies to specific content, please refer to the
+file type and purpose described above, or open an issue for clarification.
+
+---
+
+Copyright (c) 2024 LiteSVM Testing Framework Contributors
+
+See CONTRIBUTORS.md for the complete list of contributors. 

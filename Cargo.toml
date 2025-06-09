@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-authors = ["Levi Cook <levicook@gmail.com>"]
+authors = ["LiteSVM Testing Framework Contributors"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/levicook/litesvm-testing"
 homepage = "https://github.com/levicook/litesvm-testing"
