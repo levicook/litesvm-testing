@@ -34,6 +34,8 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: publish
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Extract changelog for this version
@@ -42,12 +44,11 @@ jobs:
           sed -n "/## \[$TAG_VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
           echo "Release notes for v$TAG_VERSION:" 
           cat release_notes.md
-      - uses: actions/create-release@v1
+      - name: Create GitHub Release
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          gh release create "${{ github.ref_name }}" \
+            --title "Release v$TAG_VERSION" \
+            --notes-file release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: false
