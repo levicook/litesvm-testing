@@ -145,6 +145,6 @@ publish:
 # Install tools needed for development
 install-tools:
 	@echo "🛠️  Installing development tools..."
-	cargo install cargo-edit
+	cargo install odometer
 	@command -v act >/dev/null 2>&1 || (echo "Consider installing 'act' for local GitHub Actions: brew install act")
 	@echo "✅ Tools installed" 
