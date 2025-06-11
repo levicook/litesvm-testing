@@ -1,10 +1,12 @@
 # litesvm-testing
 
-A comprehensive testing framework for Solana programs using [LiteSVM](https://github.com/LiteSVM/litesvm). Provides ergonomic, type-safe assertions for transaction results, logs, and all levels of Solana errors.
+A comprehensive testing and benchmarking framework for Solana programs using [LiteSVM](https://github.com/LiteSVM/litesvm). Provides ergonomic, type-safe assertions for transaction results, logs, and all levels of Solana errors, plus systematic compute unit (CU) analysis for performance optimization.
 
-> **⚠️ Development Status**: This library is currently in active development. The API may change before the first stable release. We plan to publish to [crates.io](https://crates.io) once the API stabilizes.
+> **⚠️ Development Status**: This library is currently in active development. The API may change before the first stable release.
 
 ## ✨ Features
+
+### 🧪 Testing Framework
 
 - 🎯 **Complete Error Testing**: Transaction, instruction, and system program errors with type safety
 - 📋 **Log Assertions**: Detailed log content verification with helpful error messages
@@ -13,7 +15,20 @@ A comprehensive testing framework for Solana programs using [LiteSVM](https://gi
 - 🎪 **Precision Control**: "Anywhere" matching vs surgical instruction-index targeting
 - 🛡️ **Type Safety**: Work with `SystemError` enums instead of raw error codes
 - 📚 **Educational Examples**: Learn API progression from verbose to elegant
-- 🚀 **Framework Support**: Anchor, Pinocchio, with more coming
+
+### 📊 CU Benchmarking Framework
+
+- ⚡ **Systematic CU Analysis**: Measure compute unit usage with statistical accuracy
+- 🔬 **Dual Paradigms**: Pure instruction benchmarking vs complete transaction workflows
+- 📈 **Percentile-Based Estimates**: Min, conservative, balanced, safe, very high, and max CU usage
+- 🎯 **Production-Ready**: Generate CU estimates for real-world fee planning
+- 📝 **Rich Context**: Execution logs, program details, and SVM environment state
+- 🔄 **Reproducible**: Consistent results across environments and runs
+
+### 🚀 Framework Support
+
+- **Testing**: Anchor, Pinocchio, with more coming
+- **Benchmarking**: Universal framework for any Solana program
 
 ## 🚀 Quick Start
 
@@ -222,22 +237,39 @@ Both styles provide identical functionality - choose what feels right for your t
 
 This repository includes comprehensive, documented examples:
 
-### Anchor Framework
+### Testing Framework
+
+#### Anchor Framework
 
 - **Program**: [`examples/anchor/simple-anchor-program/`](examples/anchor/simple-anchor-program/)
 - **Tests**: [`examples/anchor/simple-anchor-tests/`](examples/anchor/simple-anchor-tests/)
 - **Features**: IDL integration, automatic compilation, complete build documentation
 
-### Pinocchio Framework
+#### Pinocchio Framework
 
 - **Program**: [`examples/pinocchio/simple-pinocchio-program/`](examples/pinocchio/simple-pinocchio-program/)
 - **Tests**: [`examples/pinocchio/simple-pinocchio-tests/`](examples/pinocchio/simple-pinocchio-tests/)
 - **Features**: Minimal boilerplate, lightweight setup, direct BPF compilation
 
-### Educational Test Suite
+#### Educational Test Suite
 
 - **API Progression**: [`tests/test_system_error_insufficient_funds.rs`](crates/litesvm-testing/tests/test_system_error_insufficient_funds.rs)
 - **Features**: Good → Better → Best → Best+ progression, demonstrates all API styles
+
+### CU Benchmarking Framework
+
+#### Instruction Benchmarks
+
+- **SOL Transfer**: [`benches/cu_bench_sol_transfer_ix.rs`](crates/litesvm-testing/benches/cu_bench_sol_transfer_ix.rs) - Pure system program instruction (150 CU)
+- **SPL Token Transfer**: [`benches/cu_bench_spl_transfer_ix.rs`](crates/litesvm-testing/benches/cu_bench_spl_transfer_ix.rs) - Complex multi-account instruction
+
+#### Transaction Benchmarks
+
+- **Token Setup Workflow**: [`benches/cu_bench_token_setup_tx.rs`](crates/litesvm-testing/benches/cu_bench_token_setup_tx.rs) - Complete 5-instruction workflow (28K-38K CU)
+
+#### Documentation
+
+- **Complete Guide**: [`BENCHMARKING.md`](crates/litesvm-testing/BENCHMARKING.md) - Comprehensive benchmarking documentation
 
 ## 🏃‍♂️ Running Examples
 
@@ -255,6 +287,11 @@ cargo test -p simple-pinocchio-tests -- --show-output
 
 # Run educational test suite
 cargo test -p litesvm-testing test_system_error -- --show-output
+
+# Run CU benchmarks with progress logging
+cd crates/litesvm-testing
+RUST_LOG=info cargo bench --bench cu_bench_sol_transfer_ix --features cu_bench
+RUST_LOG=info cargo bench --bench cu_bench_token_setup_tx --features cu_bench
 ```
 
 ## 🛠️ Prerequisites
@@ -319,6 +356,8 @@ litesvm-testing/
 
 ## 🗺️ Roadmap
 
+### ✅ Completed Features
+
 - [x] **Core log assertion utilities**
 - [x] **Complete error testing framework** (transaction, instruction, system)
 - [x] **Type-safe system error handling**
@@ -326,8 +365,14 @@ litesvm-testing/
 - [x] **Working examples for both frameworks** with educational progression
 - [x] **Dual API styles** (direct functions + fluent method syntax)
 - [x] **Precision control** ("anywhere" vs "surgical" assertions)
+- [x] **CU benchmarking framework** with instruction and transaction paradigms
+- [x] **Statistical CU analysis** with percentile-based estimates
+- [x] **Rich benchmarking context** (execution logs, program details, SVM state)
+
+### 🔄 In Progress
+
 - [ ] **Steel framework support**
-- [ ] **Additional testing utilities** (compute unit checks, account state, etc.)
+- [ ] **Additional testing utilities** (account state verification, etc.)
 - [ ] **First stable release (v0.1.0) to crates.io**
 - [ ] **Integration with popular Solana testing patterns**
 
@@ -349,4 +394,4 @@ This project is dual licensed under GPL-3.0-or-later and CC BY-SA 4.0. See LICEN
 - [LiteSVM](https://github.com/LiteSVM/litesvm) - Fast Solana VM for testing
 - [Anchor](https://github.com/coral-xyz/anchor) - Solana development framework
 - [Pinocchio](https://github.com/anza-xyz/pinocchio) - Lightweight Solana SDK
-test
+  test
