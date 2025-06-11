@@ -111,5 +111,5 @@ pub fn build_pinocchio_program<P: AsRef<Path>>(program_path: P) {
 /// sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
 /// ```
 pub fn build_pinocchio_program_with_features<P: AsRef<Path>>(program_path: P, features: &[&str]) {
-    crate::build_solana_program_internal(program_path, features);
+    crate::build_internal::build_solana_program_internal(program_path, features);
 }

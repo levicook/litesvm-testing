@@ -9,7 +9,6 @@ use std::path::Path;
 ///
 /// * `program_path` - The path to the anchor program. (contains Anchor.toml, Cargo.toml and src/ directory)
 ///
-/// For custom feature configurations, use [`build_anchor_program_with_features`].
 pub fn build_anchor_program<P: AsRef<Path>>(program_path: P) {
     build_anchor_program_with_features(program_path, &[]);
 }
@@ -25,5 +24,5 @@ pub fn build_anchor_program<P: AsRef<Path>>(program_path: P) {
 /// * `features` - Array of feature names to enable during compilation
 ///
 pub fn build_anchor_program_with_features<P: AsRef<Path>>(program_path: P, features: &[&str]) {
-    crate::build_solana_program_internal(program_path, features);
+    crate::build_internal::build_solana_program_internal(program_path, features);
 }
