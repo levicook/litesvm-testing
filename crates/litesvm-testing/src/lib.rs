@@ -61,6 +61,9 @@ pub mod cu_bench;
 #[cfg(feature = "pinocchio")]
 pub mod pinocchio_testing;
 
+// #[cfg(feature = "token")]
+// pub mod token_testing;
+
 // #[cfg(feature = "steel")]
 // pub mod steel_testing;
 
@@ -100,6 +103,8 @@ pub mod prelude {
     pub use solana_system_interface;
     pub use solana_transaction;
     pub use solana_transaction_error;
+    pub use spl_associated_token_account;
+    pub use spl_token;
 
     pub use super::{
         demand_instruction_error, //

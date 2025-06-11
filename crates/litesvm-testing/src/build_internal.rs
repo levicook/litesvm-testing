@@ -39,32 +39,34 @@ pub(crate) fn build_solana_program_internal<P: AsRef<std::path::Path>>(
         std::process::exit(1);
     }
 
-    // Build the program in isolated directory
-    // First clean to ensure no stale artifacts
-    let clean_output = Command::new("cargo")
-        .args([
-            "clean",
-            "--manifest-path",
-            &program_manifest.to_string_lossy(),
-        ])
-        .env("CARGO_TARGET_DIR", &temp_dir)
-        .output();
+    // TODO: only call clean if an env var is set?
 
-    match clean_output {
-        Ok(output) => {
-            if !output.status.success() {
-                eprintln!("Failed to clean program:");
-                eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-                eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-                std::process::exit(1);
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to execute cargo clean: {}", e);
-            eprintln!("Make sure you have cargo installed and in your PATH");
-            std::process::exit(1);
-        }
-    }
+    // // Build the program in isolated directory
+    // // First clean to ensure no stale artifacts
+    // let clean_output = Command::new("cargo")
+    //     .args([
+    //         "clean",
+    //         "--manifest-path",
+    //         &program_manifest.to_string_lossy(),
+    //     ])
+    //     .env("CARGO_TARGET_DIR", &temp_dir)
+    //     .output();
+
+    // match clean_output {
+    //     Ok(output) => {
+    //         if !output.status.success() {
+    //             eprintln!("Failed to clean program:");
+    //             eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    //             eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    //             std::process::exit(1);
+    //         }
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Failed to execute cargo clean: {}", e);
+    //         eprintln!("Make sure you have cargo installed and in your PATH");
+    //         std::process::exit(1);
+    //     }
+    // }
 
     // Now build the program
     let output = Command::new("cargo")

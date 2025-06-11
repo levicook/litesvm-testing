@@ -28,17 +28,20 @@ anchor = []
 cu_bench = []
 pinocchio = []
 
-# [[bench]]
-# name = "cu_measurements_sol_transfer"
-# harness = false
+[[bench]]
+name = "cu_bench_sol_transfer"
+harness = false
 
-# [[bench]]
-# name = "cu_measurements_spl_token"
-# harness = false
+[[bench]]
+name = "cu_bench_spl_transfer"
+harness = false
 
 [dependencies]
+chrono = { workspace = true }
 litesvm = { workspace = true }
 num-traits = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 solana-compute-budget-interface = { workspace = true }
 solana-instruction = { workspace = true }
 solana-keypair = { workspace = true }
@@ -47,3 +50,5 @@ solana-signer = { workspace = true }
 solana-system-interface = { workspace = true }
 solana-transaction = { workspace = true }
 solana-transaction-error = { workspace = true }
+spl-associated-token-account = { workspace = true }
+spl-token = { workspace = true }
