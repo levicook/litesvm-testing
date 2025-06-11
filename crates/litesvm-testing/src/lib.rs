@@ -52,6 +52,12 @@
 #[cfg(feature = "anchor")]
 pub mod anchor_testing;
 
+#[cfg(any(feature = "anchor", feature = "pinocchio"))]
+mod build_internal;
+
+#[cfg(feature = "cu_bench")]
+pub mod cu_bench;
+
 #[cfg(feature = "pinocchio")]
 pub mod pinocchio_testing;
 

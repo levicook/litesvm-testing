@@ -35,7 +35,7 @@
 /// This works in conjunction with:
 /// - `build.rs` - Triggers program compilation via `litesvm_testing::anchor_testing::build_anchor_program`
 /// - `simple_anchor_program::ID` - The program's declared public key
-/// - `target/deploy/` - Solana's standard output location for compiled programs
+/// - `target/sbf-solana-solana/release/` - Solana's standard output location for compiled programs
 ///
 /// For more complex scenarios, see `litesvm_testing::anchor_testing` for the underlying build utilities.
 pub fn load_simple_anchor_program(svm: &mut litesvm::LiteSVM) {
@@ -43,7 +43,7 @@ pub fn load_simple_anchor_program(svm: &mut litesvm::LiteSVM) {
         simple_anchor_program::ID,
         include_bytes!(concat!(
             std::env!("CARGO_MANIFEST_DIR"),
-            "/../../../target/deploy/simple_anchor_program.so"
-        )),
+            "/../../../target/sbf-solana-solana/release/simple_anchor_program.so"
+        ),),
     );
 }

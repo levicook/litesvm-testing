@@ -25,7 +25,16 @@ path = "src/lib.rs"
 
 [features]
 anchor = []
+cu_bench = []
 pinocchio = []
+
+# [[bench]]
+# name = "cu_measurements_sol_transfer"
+# harness = false
+
+# [[bench]]
+# name = "cu_measurements_spl_token"
+# harness = false
 
 [dependencies]
 litesvm = { workspace = true }
