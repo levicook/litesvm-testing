@@ -9,6 +9,80 @@ use std::collections::HashMap;
 #[cfg(feature = "cu_bench")]
 use serde::{Deserialize, Serialize};
 
+use litesvm::LiteSVM;
+use solana_instruction::Instruction;
+use solana_transaction::Transaction;
+
+/// Trait for benchmarking the CU usage of specific instructions
+pub trait InstructionBenchmark {
+    /// Human-readable name for this instruction type
+    fn instruction_name(&self) -> &'static str;
+
+    /// Set up SVM with necessary programs and initial state (called once per benchmark run)
+    fn setup_svm(&self) -> LiteSVM;
+
+    /// Build the instruction to measure, returning instruction and required signer pubkeys
+    fn build_instruction(&self, svm: &mut LiteSVM) -> (Instruction, Vec<solana_pubkey::Pubkey>);
+
+    /// Sign the unsigned transaction containing the instruction
+    fn sign_transaction(&self, unsigned_tx: Transaction) -> Transaction;
+}
+
+/// Universal benchmark runner for any instruction implementing InstructionBenchmark
+pub fn benchmark_instruction<T: InstructionBenchmark>(
+    benchmark: T,
+    samples: usize,
+) -> ComputeUnitEstimate {
+    let mut cu_measurements = Vec::new();
+
+    // Set up SVM once - it will accumulate state across measurements
+    let mut svm = benchmark.setup_svm();
+
+    for i in 0..samples {
+        let cu_used = measure_instruction(&benchmark, &mut svm);
+        cu_measurements.push(cu_used);
+
+        if (i + 1) % 10 == 0 {
+            println!("Completed {} measurements...", i + 1);
+        }
+    }
+
+    // Create structured estimate from measurements
+    ComputeUnitEstimate::from_measurements(
+        benchmark.instruction_name().to_string(),
+        &cu_measurements,
+        vec!["litesvm".to_string()],
+    )
+}
+
+/// Measure CU usage for a single instruction
+fn measure_instruction<T: InstructionBenchmark>(benchmark: &T, svm: &mut LiteSVM) -> u64 {
+    // 1. Get target instruction and signer pubkeys from benchmark
+    let (target_ix, signer_pubkeys) = benchmark.build_instruction(svm);
+
+    // 2. Framework creates unsigned transaction with CU limit
+    use solana_compute_budget_interface::ComputeBudgetInstruction;
+    let cu_limit_ix = ComputeBudgetInstruction::set_compute_unit_limit(200_000);
+    let instructions = vec![cu_limit_ix, target_ix];
+
+    // 3. Build unsigned transaction (framework responsibility)
+    use solana_message::Message;
+
+    // Get fresh blockhash for each measurement to avoid AlreadyProcessed
+    svm.expire_blockhash();
+
+    let message = Message::new(&instructions, Some(&signer_pubkeys[0]));
+    let mut unsigned_tx = Transaction::new_unsigned(message);
+    unsigned_tx.message.recent_blockhash = svm.latest_blockhash();
+
+    // 4. Benchmark signs the transaction
+    let signed_tx = benchmark.sign_transaction(unsigned_tx);
+
+    // 5. Send transaction and measure CU usage
+    let result = svm.send_transaction(signed_tx).unwrap();
+    result.compute_units_consumed
+}
+
 /// Confidence level for CU estimates, similar to Helius Priority Fee API levels
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum CuLevel {

@@ -1757,6 +1757,7 @@ dependencies = [
  "solana-compute-budget-interface",
  "solana-instruction",
  "solana-keypair",
+ "solana-message",
  "solana-pubkey",
  "solana-signer",
  "solana-system-interface",
