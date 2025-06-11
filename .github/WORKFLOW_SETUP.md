@@ -80,6 +80,26 @@ make publish           # Publish to crates.io
 
 ## ⚙️ **Setup Requirements**
 
+### **Required Tools**
+
+**[Odometer (odo)](https://crates.io/crates/odometer)** - Workspace version management:
+
+```bash
+# Install odo for automated version management
+cargo install odometer
+
+# Verify installation
+odo --version
+```
+
+**Key odo commands:**
+```bash
+odo show                        # Display current versions
+odo roll minor --workspace     # Bump minor version for all workspace crates
+odo roll major --workspace     # Bump major version for all workspace crates  
+odo roll patch --workspace     # Bump patch version for all workspace crates
+```
+
 ### **Required GitHub Secrets**
 
 **Settings → Secrets and variables → Actions:**
@@ -106,30 +126,49 @@ make publish           # Publish to crates.io
 ### **Automatic (Recommended)**
 
 ```bash
-# 1. Update version
-vim crates/litesvm-testing/Cargo.toml
+# 1. Update versions across workspace
+odo roll minor --workspace     # or: odo roll major/patch --workspace
+odo show                       # Verify all versions updated
 
-# 2. Update changelog
+# 2. Update changelog  
 vim CHANGELOG.md
 
-# 3. Commit and tag
-git add -A && git commit -m "Release v0.1.0"
-git tag v0.1.0 && git push origin main v0.1.0
+# 3. Create release branch & PR
+git checkout -b release/0.2.0
+git add -A && git commit -m "chore: release 0.2.0"
+git push origin release/0.2.0
+gh pr create --title "Release 0.2.0" --body "Version bump and changelog for 0.2.0 release"
 
-# 4. Watch automation ✨
-# → Docker validation
+# 4. After PR merged, tag the release
+git checkout main && git pull
+git tag v0.2.0 && git push origin v0.2.0
+
+# 5. Watch automation ✨
+# → Docker validation  
 # → crates.io publishing
 # → GitHub release creation
 ```
+
+### **Why the PR Process?**
+
+Branch protection on `main` requires:
+- ✅ Status checks: `Quick Checks (Native)`, `Docker Validation (Complete)`
+- ✅ Up-to-date branches before merging
+- ✅ Applies to administrators too
+
+This ensures **every release is validated** through CI before reaching `main`.
 
 ### **Local Testing (Before Release)**
 
 ```bash
 # Test exact release process locally
-TAG_VERSION="0.1.0" make release-validation
+TAG_VERSION="0.2.0" make release-validation
 
 # Or full Docker CI
 make ci-docker-full
+
+# Verify versions before release
+odo show
 ```
 
 ## 🐛 **Debugging CI Issues**
@@ -193,8 +232,9 @@ Enforced automatically:
 
 ```bash
 # Check versions match:
-git describe --tags           # v0.1.0
-grep '^version = ' crates/litesvm-testing/Cargo.toml  # version = "0.1.0"
+git describe --tags           # v0.2.0
+odo show                     # All workspace versions
+grep '^version = ' crates/litesvm-testing/Cargo.toml  # version = "0.2.0"
 ```
 
 **"Docker container fails"**
