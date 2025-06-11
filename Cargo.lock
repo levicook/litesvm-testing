@@ -1856,7 +1856,7 @@ dependencies = [
 
 [[package]]
 name = "litesvm-testing"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "env_logger 0.11.8",
@@ -2739,14 +2739,14 @@ checksum = "74233d3b3b2f6d4b006dc19dee745e73e2a6bfb6f93607cd3b02bd5b00797d7c"
 
 [[package]]
 name = "simple-anchor-program"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "anchor-lang",
 ]
 
 [[package]]
 name = "simple-anchor-tests"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "anchor-lang",
  "litesvm",
@@ -2756,7 +2756,7 @@ dependencies = [
 
 [[package]]
 name = "simple-pinocchio-program"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "pinocchio",
  "pinocchio-log",
@@ -2765,7 +2765,7 @@ dependencies = [
 
 [[package]]
 name = "simple-pinocchio-tests"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "litesvm",
  "litesvm-testing",

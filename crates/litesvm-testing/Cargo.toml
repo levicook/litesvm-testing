@@ -1,6 +1,6 @@
 [package]
 name = "litesvm-testing"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["LiteSVM Testing Framework Contributors"]
 license = "GPL-3.0-or-later"
