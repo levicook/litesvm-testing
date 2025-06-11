@@ -50,7 +50,7 @@
 /// This works in conjunction with:
 /// - `build.rs` - Triggers program compilation via `litesvm_testing::pinocchio_testing::build_pinocchio_program`
 /// - `simple_pinocchio_program::ID` - The program's declared public key
-/// - `target/deploy/` - Solana's standard output location for compiled programs
+/// - `target/sbf-solana-solana/release/` - Solana's standard output location for compiled programs
 /// - `bpf-entrypoint` feature - Required for Pinocchio BPF compilation
 ///
 /// For more complex scenarios or custom features, see `litesvm_testing::pinocchio_testing` for the underlying build utilities.
@@ -59,7 +59,7 @@ pub fn load_simple_pinocchio_program(svm: &mut litesvm::LiteSVM) {
         simple_pinocchio_program::ID.into(),
         include_bytes!(concat!(
             std::env!("CARGO_MANIFEST_DIR"),
-            "/../../../target/deploy/simple_pinocchio_program.so"
+            "/../../../target/sbf-solana-solana/release/simple_pinocchio_program.so"
         )),
     );
 }
