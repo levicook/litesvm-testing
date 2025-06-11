@@ -1,6 +1,7 @@
 use litesvm::LiteSVM;
 use litesvm_testing::cu_bench::{benchmark_instruction, InstructionBenchmark};
 use litesvm_testing::prelude::*;
+use log::info;
 use solana_instruction::Instruction;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
@@ -54,27 +55,40 @@ impl InstructionBenchmark for SolTransferBenchmark {
         unsigned_tx.sign(&signers, unsigned_tx.message.recent_blockhash);
         unsigned_tx
     }
+
+    fn address_book(&self) -> std::collections::HashMap<Pubkey, String> {
+        let mut book = std::collections::HashMap::new();
+        book.insert(
+            solana_system_interface::program::ID,
+            "system_program".to_string(),
+        );
+        book.insert(self.sender.pubkey(), "sender".to_string());
+        book.insert(self.recipient.pubkey(), "recipient".to_string());
+        book
+    }
 }
 
 fn main() {
-    println!("=== SOL Transfer CU Benchmark ===");
+    env_logger::init();
+    info!("=== SOL Transfer CU Benchmark ===");
 
     let benchmark = SolTransferBenchmark::new();
-    let estimate = benchmark_instruction(benchmark, 100);
+    let result = benchmark_instruction(benchmark, 100);
 
-    println!(
+    info!(
         "Measured {} samples: {} CU ({}% variance)",
-        estimate.sample_size,
-        estimate.balanced,
-        if estimate.min == estimate.unsafe_max {
+        result.cu_estimate.sample_size,
+        result.cu_estimate.balanced,
+        if result.cu_estimate.min == result.cu_estimate.unsafe_max {
             0
         } else {
-            ((estimate.unsafe_max - estimate.min) * 100) / estimate.balanced
+            ((result.cu_estimate.unsafe_max - result.cu_estimate.min) * 100)
+                / result.cu_estimate.balanced
         }
     );
 
     println!(
         "{}",
-        serde_json::to_string_pretty(&estimate).expect("Failed to serialize")
+        serde_json::to_string_pretty(&result).expect("Failed to serialize")
     );
 }

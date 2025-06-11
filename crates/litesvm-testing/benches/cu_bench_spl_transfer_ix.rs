@@ -1,11 +1,17 @@
+use std::collections::HashMap;
+
 use litesvm::LiteSVM;
 use litesvm_testing::cu_bench::{benchmark_instruction, InstructionBenchmark};
 use litesvm_testing::prelude::*;
+use log::info;
 use solana_instruction::Instruction;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
+use solana_system_interface::instruction::create_account;
 use solana_transaction::Transaction;
+use spl_associated_token_account::instruction::create_associated_token_account;
+use spl_token::instruction::{initialize_mint, mint_to};
 use spl_token::solana_program::program_pack::Pack;
 
 /// SPL token transfer benchmark using the new framework
@@ -29,6 +35,7 @@ impl SplTokenTransferBenchmark {
             &sender.pubkey(),
             &mint.pubkey(),
         );
+
         let recipient_ata = spl_associated_token_account::get_associated_token_address(
             &recipient.pubkey(),
             &mint.pubkey(),
@@ -61,7 +68,7 @@ impl InstructionBenchmark for SplTokenTransferBenchmark {
         svm.airdrop(&self.recipient.pubkey(), 10_000_000).unwrap();
 
         // Create mint account
-        let create_mint_account_ix = solana_system_interface::instruction::create_account(
+        let create_mint_account_ix = create_account(
             &self.mint_authority.pubkey(),
             &self.mint.pubkey(),
             5_000_000, // Rent exemption
@@ -70,7 +77,7 @@ impl InstructionBenchmark for SplTokenTransferBenchmark {
         );
 
         // Initialize mint
-        let create_mint_ix = spl_token::instruction::initialize_mint(
+        let create_mint_ix = initialize_mint(
             &spl_token::ID,
             &self.mint.pubkey(),
             &self.mint_authority.pubkey(),
@@ -80,24 +87,22 @@ impl InstructionBenchmark for SplTokenTransferBenchmark {
         .unwrap();
 
         // Create associated token accounts
-        let create_sender_ata_ix =
-            spl_associated_token_account::instruction::create_associated_token_account(
-                &self.mint_authority.pubkey(),
-                &self.sender.pubkey(),
-                &self.mint.pubkey(),
-                &spl_token::ID,
-            );
+        let create_sender_ata_ix = create_associated_token_account(
+            &self.mint_authority.pubkey(),
+            &self.sender.pubkey(),
+            &self.mint.pubkey(),
+            &spl_token::ID,
+        );
 
-        let create_recipient_ata_ix =
-            spl_associated_token_account::instruction::create_associated_token_account(
-                &self.mint_authority.pubkey(),
-                &self.recipient.pubkey(),
-                &self.mint.pubkey(),
-                &spl_token::ID,
-            );
+        let create_recipient_ata_ix = create_associated_token_account(
+            &self.mint_authority.pubkey(),
+            &self.recipient.pubkey(),
+            &self.mint.pubkey(),
+            &spl_token::ID,
+        );
 
         // Mint tokens to sender (enough for 200+ transfers)
-        let mint_to_ix = spl_token::instruction::mint_to(
+        let mint_to_ix = mint_to(
             &spl_token::ID,
             &self.mint.pubkey(),
             &self.sender_ata,
@@ -108,7 +113,7 @@ impl InstructionBenchmark for SplTokenTransferBenchmark {
         .unwrap();
 
         // Execute setup transaction
-        let setup_tx = solana_transaction::Transaction::new_signed_with_payer(
+        let setup_tx = Transaction::new_signed_with_payer(
             &[
                 create_mint_account_ix,
                 create_mint_ix,
@@ -122,6 +127,7 @@ impl InstructionBenchmark for SplTokenTransferBenchmark {
         );
 
         svm.send_transaction(setup_tx).unwrap();
+
         svm
     }
 
@@ -145,27 +151,49 @@ impl InstructionBenchmark for SplTokenTransferBenchmark {
         unsigned_tx.sign(&signers, unsigned_tx.message.recent_blockhash);
         unsigned_tx
     }
+
+    fn address_book(&self) -> HashMap<Pubkey, String> {
+        HashMap::from_iter(vec![
+            (spl_token::ID, "spl_token".to_string()),
+            (
+                spl_associated_token_account::ID,
+                "spl_associated_token_account".to_string(),
+            ),
+            (self.mint.pubkey(), "test_mint".to_string()),
+            (self.sender_ata, "sender_ata".to_string()),
+            (self.recipient_ata, "recipient_ata".to_string()),
+            (self.sender.pubkey(), "sender".to_string()),
+            (self.recipient.pubkey(), "recipient".to_string()),
+            (self.mint_authority.pubkey(), "mint_authority".to_string()),
+            (
+                solana_system_interface::program::ID,
+                "system_program".to_string(),
+            ),
+        ])
+    }
 }
 
 fn main() {
-    println!("=== SPL Token Transfer CU Benchmark ===");
+    env_logger::init();
+    info!("=== SPL Token Transfer CU Benchmark ===");
 
     let benchmark = SplTokenTransferBenchmark::new();
-    let estimate = benchmark_instruction(benchmark, 100);
+    let result = benchmark_instruction(benchmark, 100);
 
-    println!(
+    info!(
         "Measured {} samples: {} CU ({}% variance)",
-        estimate.sample_size,
-        estimate.balanced,
-        if estimate.min == estimate.unsafe_max {
+        result.cu_estimate.sample_size,
+        result.cu_estimate.balanced,
+        if result.cu_estimate.min == result.cu_estimate.unsafe_max {
             0
         } else {
-            ((estimate.unsafe_max - estimate.min) * 100) / estimate.balanced
+            ((result.cu_estimate.unsafe_max - result.cu_estimate.min) * 100)
+                / result.cu_estimate.balanced
         }
     );
 
     println!(
         "{}",
-        serde_json::to_string_pretty(&estimate).expect("Failed to serialize")
+        serde_json::to_string_pretty(&result).expect("Failed to serialize")
     );
 }

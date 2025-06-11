@@ -106,6 +106,11 @@ pub mod prelude {
     pub use spl_associated_token_account;
     pub use spl_token;
 
+    pub use solana_keypair::Keypair;
+    pub use solana_pubkey::Pubkey;
+    pub use solana_signer::Signer;
+    pub use solana_system_interface::program as system_program;
+
     pub use super::{
         demand_instruction_error, //
         demand_instruction_error_at_index,
